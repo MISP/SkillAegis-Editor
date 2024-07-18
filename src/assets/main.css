@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#app {
+    @apply bg-gray-300;
+    @apply min-h-full;
+    @apply h-screen;
+    @apply h-full;
+}
+
+.disabled-link {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.slide-fade-enter-active {
+    transition: all 0.2s ease-out;
+}
+
+.slide-fade-leave-active {
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+    transform: translateX(20px);
+    opacity: 0;
+}
+
+.slide-fade-reverse-enter-active {
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-reverse-leave-active {
+    transition: all 0.2s ease-out;
+}
+
+.slide-fade-reverse-enter-from,
+.slide-fade-reverse-leave-to {
+    transform: translateX(-20px);
+    opacity: 0;
+}
+
+.btn {
+    @apply px-2 py-1 font-semibold rounded border text-nowrap transition-all duration-75;
+    @apply border-slate-300;
+}
+
+.btn:not(:disabled) {
+    @apply hover:bg-slate-200 hover:border-slate-300;
+    @apply active:scale-90
+}
+
+.btn:disabled {
+    @apply cursor-not-allowed opacity-60;
+}
+
+.btn-info:not(:disabled) {
+    @apply hover:bg-blue-500 hover:border-blue-700 hover:text-white;
+}
+
+.btn-danger:not(:disabled) {
+    @apply hover:bg-red-500 hover:border-red-700 hover:text-white;
+}
+
+.btn-success:not(:disabled) {
+    @apply hover:bg-green-500 hover:border-green-700 hover:text-white;
+}
+
+.btn-link:not(:disabled) {
+    @apply border-none;
+    @apply hover:bg-transparent hover:border-transparent hover:text-inherit;
+}
+
+input:disabled {
+    @apply cursor-not-allowed;
+}

@@ -1,0 +1,40 @@
+<script setup>
+import { selectedScenario, selectedScenarioUUID } from '@/store.js'
+import { faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import Toaster from '@/components/Toaster.vue'
+import Navbar from '@/components/Navbar.vue'
+</script>
+
+<template>
+  <div class="h-full flex flex-col">
+    <div class="bg-slate-800 pb-[6rem]">
+      <Navbar></Navbar>
+
+      <header class="shadow">
+        <div class="mx-auto max-w-7xl py-8 px-4">
+          <h1 class="text-3xl font-bold tracking-tight text-white">
+            {{ $route.name }}
+            <span v-show="$route.name !== 'Scenarios List' && selectedScenario !== null">
+              <FontAwesomeIcon :icon="faCaretRight" class="fa-fw"></FontAwesomeIcon>
+              <span class="font-light">{{ selectedScenario?.exercise?.name }}</span>
+            </span>
+          </h1>
+        </div>
+      </header>
+    </div>
+
+    <main class="flex-auto">
+      <div class="mx-auto -mt-[7rem] w-11/12 max-w-10xl px-6 py-6 h-full bg-slate-50 rounded-lg">
+        <router-view v-slot="{ Component }">
+          <transition name="slide-fade" mode="out-in">
+            <keep-alive>
+              <component :is="Component" />
+            </keep-alive>
+          </transition>
+        </router-view>
+      </div>
+    </main>
+
+    <Toaster></Toaster>
+  </div>
+</template>
