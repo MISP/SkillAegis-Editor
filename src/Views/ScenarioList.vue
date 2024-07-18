@@ -22,6 +22,15 @@ const error = ref(null)
 
 // watch the params of the route to fetch the data again
 watch(() => route.params.id, fetchData, { immediate: true })
+watch(
+  () => route.name,
+  () => {
+    if (route.name == 'Scenario Index') {
+      store.selected_scenario = null
+    }
+  },
+  { immediate: true }
+)
 
 onUpdated(() => {
   //   store.selected_scenario = null

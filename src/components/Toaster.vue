@@ -14,7 +14,7 @@ function remove(toast_id) {
 <template>
   <Teleport to="body">
     <div ref="container" class="absolute m-3 top-0 right-0">
-      <transition-group name="list" tag="div" class="flex flex-col gap-2">
+      <transition-group name="list" tag="div" class="flex flex-col-reverse gap-2">
         <Toast
           v-for="toast of toasts"
           :key="toast.id"
