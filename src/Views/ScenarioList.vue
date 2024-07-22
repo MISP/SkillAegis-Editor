@@ -55,7 +55,7 @@ async function fetchData() {
 
 function selectScenario(uuid) {
   store.selected_scenario = uuid
-  router.push({ name: 'Scenario Overview', params: { uuid: uuid } })
+  router.push({ name: 'Scenario Overview', params: { uuid: uuid }, props: true })
 }
 
 function createScenario() {
@@ -75,16 +75,14 @@ async function deleteScenario(uuid) {
       <FontAwesomeIcon :icon="faSpinner" class="text-4xl fa-spin"></FontAwesomeIcon>
     </div>
 
-    <div
+    <Alert
       v-if="error"
-      class="mb-2 p-2 border-l-4 text-left rounded dark:bg-red-300 dark:text-slate-900 dark:border-red-700 bg-red-200 text-slate-900 border-red-700"
-    >
-      <FontAwesomeIcon :icon="faWarning" class="text-red-700 text-lg mx-3"></FontAwesomeIcon>
-      <strong class="mr-2">Failed to fetch scenarios:</strong>
-      <span class="">{{ error }}</span>
-    </div>
+      variant="danger"
+      :title="'Failed to fetch scenarios:'"
+      :message="error"
+    ></Alert>
 
-    <div v-if="scenarios">
+    <div v-if="scenarios.length > 0">
       <div class="mb-2 flex flex-row-reverse">
         <button class="btn btn-success" @click="createScenario()">
           <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>

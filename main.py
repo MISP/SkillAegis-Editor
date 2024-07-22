@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 ACTIVE_EXERCISES_DIR = "active_exercises"
 script_dir = Path(__file__).parent / ACTIVE_EXERCISES_DIR
-EXERCISE_DIR = Path('/home/sami/git/exercise-dashboard') / ACTIVE_EXERCISES_DIR
+EXERCISE_DIR = Path('/home/sami/git/SkillAegis') / ACTIVE_EXERCISES_DIR
 
 app = FastAPI()
 

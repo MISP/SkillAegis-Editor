@@ -1,14 +1,14 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { selectedScenario, selectedScenarioUUID } from '@/store.js'
-import { faHashtag, faSave, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faHashtag, faPenRuler, faSave, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { ref, computed, onMounted, onBeforeUnmount, watch, onActivated, onDeactivated } from 'vue'
 import JsonEditorVue from 'json-editor-vue'
 import { Mode } from 'vanilla-jsoneditor'
 import { editScenario, fetchScenarios } from '@/api'
 import { ajaxFeedback } from '@/main'
 
-defineProps({
+const props = defineProps({
   uuid: String
 })
 
@@ -86,6 +86,10 @@ function cancel() {
   router.push({ name: 'Scenario Index' })
 }
 
+function designScenario() {
+  router.push({ name: 'Scenario Designer', params: { uuid: props.uuid }, props: true })
+}
+
 onMounted(() => {
   initForm()
 })
@@ -121,6 +125,9 @@ function initForm() {
   <div>
     <div>
       <div class="mb-4 flex flex-row-reverse gap-2">
+        <button class="btn select-none" @click="designScenario()">
+          <FontAwesomeIcon :icon="faPenRuler" class="fa-fw"></FontAwesomeIcon>Design Scenario
+        </button>
         <button class="btn btn-success select-none" @click="saveScenario()" :disabled="!canBeSaved">
           <FontAwesomeIcon :icon="faSave" class="fa-fw"></FontAwesomeIcon>Save Scenario
         </button>
@@ -181,7 +188,7 @@ function initForm() {
             </div>
           </div>
 
-          <div class="flex">
+          <div class="flex gap-6">
             <div class="basis-1/2">
               <label for="name" class="block text-gray-700 font-bold mb-2">Scenario Meta</label>
               <JsonEditorVue
@@ -194,37 +201,39 @@ function initForm() {
                 class="shadow-lg border w-full"
               />
             </div>
+            <div class="basis-1/4">
+              <label for="name" class="block text-gray-700 font-bold mb-2">Scenario Meta</label>
+              <div class="border-slate-200 border p-3 rounded w-full">
+                <div class="flex gap-1">
+                  <span class="font-bold">
+                    <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Injects
+                  </span>
+                  <span class="ml-auto font-semibold">{{ injectCount }}</span>
+                </div>
+                <div class="flex gap-1">
+                  <span class="font-bold">
+                    <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Inject Payloads
+                  </span>
+                  <span class="ml-auto font-semibold">{{ injectPayloadCount }}</span>
+                </div>
+                <div class="flex gap-1">
+                  <span class="font-bold">
+                    <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Target Tools
+                  </span>
+                  <span
+                    :class="`ml-auto font-semibold ${
+                      injectTargetToolUsed.length > 0 ? '' : 'font-normal text-gray-400'
+                    }`"
+                    >{{
+                      injectTargetToolUsed.length > 0 ? injectTargetToolUsed.join(', ') : '- none -'
+                    }}</span
+                  >
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </form>
-    </div>
-
-    <div class="mt-4 border-slate-200 border p-3 rounded w-1/4">
-      <div class="flex gap-1">
-        <span class="font-bold">
-          <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Injects
-        </span>
-        <span class="ml-auto font-semibold">{{ injectCount }}</span>
-      </div>
-      <div class="flex gap-1">
-        <span class="font-bold">
-          <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Inject Payloads
-        </span>
-        <span class="ml-auto font-semibold">{{ injectPayloadCount }}</span>
-      </div>
-      <div class="flex gap-1">
-        <span class="font-bold">
-          <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Target Tools
-        </span>
-        <span
-          :class="`ml-auto font-semibold ${
-            injectTargetToolUsed.length > 0 ? '' : 'font-normal text-gray-400'
-          }`"
-          >{{
-            injectTargetToolUsed.length > 0 ? injectTargetToolUsed.join(', ') : '- none -'
-          }}</span
-        >
-      </div>
     </div>
   </div>
 </template>

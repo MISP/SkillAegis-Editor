@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar.vue'
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
+  <div class="flex flex-col">
     <div class="bg-slate-800 pb-[6rem]">
       <Navbar></Navbar>
 
@@ -24,7 +24,9 @@ import Navbar from '@/components/Navbar.vue'
     </div>
 
     <main class="flex-auto">
-      <div class="mx-auto -mt-[7rem] w-11/12 max-w-10xl px-6 py-6 h-full bg-slate-50 rounded-lg">
+      <div
+        class="min-h-[800px] mx-auto -mt-[7rem] mb-4 w-11/12 max-w-10xl px-6 py-6 h-full bg-slate-50 rounded-lg"
+      >
         <router-view v-slot="{ Component }">
           <transition name="slide-fade" mode="out-in">
             <keep-alive>

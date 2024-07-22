@@ -15,6 +15,7 @@ import { hasScenario, hasScenarios, store } from './store.js'
 import { createApp, ref } from 'vue'
 import App from './App.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import Alert from '@/components/Alert.vue'
 import { fetchScenarios } from './api'
 
 
@@ -22,9 +23,9 @@ const routes = [
     { path: '/', component: ScenarioList },
     { path: '/scenarios/index', name: 'Scenario Index', component: ScenarioList, meta: { requiresScenarioSelection: false }, },
     { path: '/scenarios/add', name: 'New Scenario', component: ScenarioNew, meta: { requiresScenarioSelection: false }, },
-    { path: '/scenarios/overview/:uuid?', name: 'Scenario Overview', component: ScenarioOverview, meta: { requiresScenarioSelection: true }, },
-    { path: '/scenarios/designer/:uuid?', name: 'Scenario Designer', component: ScenarioDesigner, meta: { requiresScenarioSelection: true }, },
-    { path: '/injects/tester/:uuid?', name: 'Inject Tester', component: InjectTester },
+    { path: '/scenarios/overview/:uuid?', name: 'Scenario Overview', component: ScenarioOverview, meta: { requiresScenarioSelection: true }, props: true },
+    { path: '/scenarios/designer/:uuid?', name: 'Scenario Designer', component: ScenarioDesigner, meta: { requiresScenarioSelection: true }, props: true },
+    { path: '/injects/tester/:uuid?', name: 'Inject Tester', component: InjectTester, props: true },
 ]
 
 const router = createRouter({
@@ -75,5 +76,6 @@ export function ajaxFeedback(response) {
 
 const app = createApp(App)
 app.component('FontAwesomeIcon', FontAwesomeIcon)
+app.component('Alert', Alert)
 app.use(router)
 app.mount('#app')
