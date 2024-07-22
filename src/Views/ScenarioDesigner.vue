@@ -1,7 +1,10 @@
 <script setup>
 import { v4 as uuidv4 } from 'uuid'
-import { useRoute, useRouter } from 'vue-router'
-import { addNewInjectToSelectedScenario, selectedScenario } from '@/store.js'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import {
+  addNewInjectToSelectedScenario,
+  selectedScenario as originalSelectedScenario
+} from '@/store.js'
 import { Mode } from 'vanilla-jsoneditor'
 import {
   faCirclePlay,
@@ -65,11 +68,101 @@ watch(
   }
 )
 
-const showEditor = ref(false)
-const canBeSaved = computed(() => {
-  return false
+onBeforeRouteLeave(async (to, from) => {
+  resetState()
 })
 
+const showEditor = ref(false)
+const canBeSaved = computed(() => {
+  return hasValidChanges.value
+})
+
+const hasValidChanges = computed(() => {
+  if (!selectedInject.value) {
+    return false
+  }
+  const originalSelectedInject = originalSelectedScenario.value.injects.filter(
+    (inj) => inj.uuid == selectedInjectFlowUUID.value
+  )[0]
+
+  const metaChanges =
+    originalSelectedInject.name != selectedInject.value.name ||
+    (selectedInject.value.description !== '' &&
+      originalSelectedInject.description != selectedInject.value.description) ||
+    originalSelectedInject.target_tool != selectedInject.value.target_tool
+
+  if (metaChanges) {
+    return true
+  }
+
+  let jsonChanges = false
+  for (let i = 0; i < selectedInject.value.inject_evaluation.length; i++) {
+    const inject_eval = selectedInject.value.inject_evaluation[i]
+    const orig_inject_eval = originalSelectedInject.inject_evaluation[i]
+
+    /* evaluation_context */
+    try {
+      if (typeof inject_eval.evaluation_context === 'string') {
+        JSON.parse(inject_eval.evaluation_context)
+      }
+      if (typeof inject_eval.parameters === 'string') {
+        JSON.parse(inject_eval.parameters)
+      }
+    } catch (error) {
+      console.log('error C')
+      return false
+    }
+
+    let context_str =
+      typeof inject_eval.evaluation_context === 'object'
+        ? JSON.stringify(inject_eval.evaluation_context, undefined, 4)
+        : inject_eval.evaluation_context
+    let orig_context_str =
+      typeof orig_inject_eval.evaluation_context === 'object'
+        ? JSON.stringify(orig_inject_eval.evaluation_context, undefined, 4)
+        : orig_inject_eval.evaluation_context
+
+    if (context_str != orig_context_str) {
+      jsonChanges = true
+      break
+    }
+
+    /* evaluation_context */
+    try {
+      if (typeof inject_eval.evaluation_context === 'string') {
+        JSON.parse(inject_eval.evaluation_context)
+      }
+      if (typeof inject_eval.parameters === 'string') {
+        JSON.parse(inject_eval.parameters)
+      }
+    } catch (error) {
+      console.log('error P')
+      return false
+    }
+
+    let params_str =
+      typeof inject_eval.parameters === 'object'
+        ? JSON.stringify(inject_eval.parameters, undefined, 4)
+        : inject_eval.parameters
+    let orig_params_str =
+      typeof orig_inject_eval.parameters === 'object'
+        ? JSON.stringify(orig_inject_eval.parameters, undefined, 4)
+        : orig_inject_eval.parameters
+
+    if (params_str != orig_params_str) {
+      jsonChanges = true
+      break
+    }
+  }
+
+  return jsonChanges
+})
+
+const selectedScenario = computed(() => {
+  return JSON.parse(JSON.stringify(originalSelectedScenario.value))
+})
+
+let originalInject = {}
 const selectedInject = ref(null)
 const selectedInjectFlowUUID = ref(null)
 const selectedInjectFlow = ref(null)
@@ -121,53 +214,21 @@ const inject_flows = computed(() => {
 })
 
 function selectInject(uuid) {
+  revertInjectChanges()
+  originalInject = JSON.parse(JSON.stringify(injectByUUID.value[uuid]))
   selectedInject.value = injectByUUID.value[uuid]
   selectedInjectFlow.value = injectFlowByUUID.value[uuid]
   selectedInjectFlowUUID.value = uuid
-  // resetForm()
-  // updateForm()
 }
-
-// function updateForm() {
-//   inject_name.value = selectedInject.value.name
-//   inject_description.value = selectedInject.value.description
-//   inject_target_tool.value = selectedInject.value.target_tool
-
-//   selectedInject.value?.inject_evaluation.forEach((inject_eval) => {
-//     inject_eval_strategy.value.push(inject_eval.evaluation_strategy)
-//     inject_eval_score.value.push(inject_eval.score_range[1])
-//     inject_eval_result.value.push(inject_eval.result)
-//     inject_eval_context.value.push(JSON.stringify(inject_eval.evaluation_context, null, 4))
-//     inject_eval_params.value.push(JSON.stringify(inject_eval.parameters, null, 4))
-//   })
-// }
 
 function resetState() {
+  revertInjectChanges()
   selectedInject.value = null
-  // resetForm()
 }
 
-// function resetForm() {
-//   inject_name.value = ''
-//   inject_description.value = ''
-//   inject_target_tool.value = 'MISP'
-
-//   inject_eval_strategy.value = []
-//   inject_eval_score.value = []
-//   inject_eval_result.value = []
-//   inject_eval_context.value = []
-//   inject_eval_params.value = []
-// }
-
-// const inject_name = ref('')
-// const inject_description = ref('')
-// const inject_target_tool = ref('MISP')
-
-// const inject_eval_strategy = ref([])
-// const inject_eval_score = ref([])
-// const inject_eval_result = ref([])
-// const inject_eval_context = ref([])
-// const inject_eval_params = ref([])
+function revertInjectChanges() {
+  injectByUUID.value[selectedInjectFlowUUID.value] = originalInject
+}
 
 function cancel() {
   router.push({ name: 'Scenario Overview', params: { uuid: props.uuid }, props: true })
@@ -195,8 +256,12 @@ function createNewInjectEval() {}
       <button class="btn btn-danger select-none" @click="cancel()">
         <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>Cancel Changes
       </button>
-      <button class="btn btn-success select-none" @click="saveScenario()" :disabled="!canBeSaved">
-        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Scenario
+      <button
+        :class="`btn btn-success select-none ${canBeSaved ? 'highlight' : ''}`"
+        @click="saveScenario()"
+        :disabled="!canBeSaved"
+      >
+        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Changes
       </button>
     </div>
 
@@ -445,3 +510,9 @@ function createNewInjectEval() {}
     </div>
   </div>
 </template>
+
+<style scoped>
+button.highlight {
+  @apply bg-green-400;
+}
+</style>
