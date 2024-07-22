@@ -6,10 +6,13 @@ export default {
   ],
   safelist: [
     {
-      pattern: /bg-(red|green|blue|amber)-(100|800)/, // Includes bg of all colors and shades
+      pattern: /bg-(red|green|blue|amber)-(100|200|300|800)/, // Includes bg of all colors and shades
     },
     {
-      pattern: /text-(red|green|blue|amber)-(100|800)/, // Includes bg of all colors and shades
+      pattern: /text-(red|green|blue|amber)-(100|700|800)/, // Includes bg of all colors and shades
+    },
+    {
+      pattern: /border-(red|green|blue|amber)-(700)/, // Includes bg of all colors and shades
     },
   ],
   theme: {

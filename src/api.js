@@ -52,7 +52,6 @@ async function post(url, payload) {
 export async function fetchScenarios() {
     const data = await get(endpoints['scenarios-index'])
     store.scenarios = data.scenarios
-    store.scenario_by_uuid = data.scenario_by_uuid
 }
 
 export async function fetchScenario() {
@@ -73,7 +72,6 @@ export async function deleteScenario(uuid) {
     const data = await post(url)
     if (data.success) {
         store.scenarios = store.scenarios.filter((s) => s.exercise.uuid != uuid)
-        delete store.scenario_by_uuid[uuid]
     }
     return data
 }

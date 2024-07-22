@@ -1,6 +1,7 @@
 <script setup>
+import { v4 as uuidv4 } from 'uuid'
 import { useRoute, useRouter } from 'vue-router'
-import { selectedScenario } from '@/store.js'
+import { addNewInjectToSelectedScenario, selectedScenario } from '@/store.js'
 import { Mode } from 'vanilla-jsoneditor'
 import {
   faCirclePlay,
@@ -29,6 +30,12 @@ import JsonEditorVue from 'json-editor-vue'
 const props = defineProps({
   uuid: String
 })
+
+const ALLOWED_STRATEGIES = {
+  data_filtering: 'Filter Event data',
+  query_mirror: 'Perform the same query against MISP',
+  query_search: 'Perform a search query on MISP and compare the returned result'
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -67,6 +74,32 @@ const selectedInject = ref(null)
 const selectedInjectFlowUUID = ref(null)
 const selectedInjectFlow = ref(null)
 
+const emptyInject = {
+  uuid: '',
+  target_tool: 'MISP',
+  name: '',
+  action: '',
+  inject_evaluation: [
+    {
+      evaluation_strategy: 'data_filtering',
+      result: '',
+      score_range: [0, 20],
+      evaluation_context: {},
+      parameters: []
+    }
+  ]
+}
+const emptyInjectFlow = {
+  inject_uuid: '',
+  requirements: {},
+  sequence: {
+    followed_by: [],
+    trigger: []
+  }
+}
+
+const unsavedNewInjectUUIDs = []
+
 const injectByUUID = computed(() => {
   const injects = {}
   selectedScenario.value.injects.forEach((inj) => {
@@ -91,46 +124,50 @@ function selectInject(uuid) {
   selectedInject.value = injectByUUID.value[uuid]
   selectedInjectFlow.value = injectFlowByUUID.value[uuid]
   selectedInjectFlowUUID.value = uuid
-  updateForm()
+  // resetForm()
+  // updateForm()
 }
 
-function updateForm() {
-  inject_name.value = selectedInject.value.name
-  inject_description.value = selectedInject.value.description
-  inject_target_tool.value = selectedInject.value.target_tool
+// function updateForm() {
+//   inject_name.value = selectedInject.value.name
+//   inject_description.value = selectedInject.value.description
+//   inject_target_tool.value = selectedInject.value.target_tool
 
-  selectedInject.value?.inject_evaluation.forEach((inject_eval) => {
-    inject_eval_strategy.value.push(inject_eval.evaluation_strategy)
-    inject_eval_score.value.push(inject_eval.score_range[1])
-    inject_eval_result.value.push(inject_eval.result)
-    inject_eval_context.value.push(JSON.stringify(inject_eval.evaluation_context, null, 4))
-    inject_eval_params.value.push(JSON.stringify(inject_eval.parameters, null, 4))
-  })
-}
+//   selectedInject.value?.inject_evaluation.forEach((inject_eval) => {
+//     inject_eval_strategy.value.push(inject_eval.evaluation_strategy)
+//     inject_eval_score.value.push(inject_eval.score_range[1])
+//     inject_eval_result.value.push(inject_eval.result)
+//     inject_eval_context.value.push(JSON.stringify(inject_eval.evaluation_context, null, 4))
+//     inject_eval_params.value.push(JSON.stringify(inject_eval.parameters, null, 4))
+//   })
+// }
 
 function resetState() {
   selectedInject.value = null
-
-  inject_name.value = ''
-  inject_description.value = ''
-  inject_target_tool.value = 'MISP'
-
-  inject_eval_strategy.value = []
-  inject_eval_score.value = []
-  inject_eval_result.value = []
-  inject_eval_context.value = []
-  inject_eval_params.value = []
+  // resetForm()
 }
 
-const inject_name = ref('')
-const inject_description = ref('')
-const inject_target_tool = ref('MISP')
+// function resetForm() {
+//   inject_name.value = ''
+//   inject_description.value = ''
+//   inject_target_tool.value = 'MISP'
 
-const inject_eval_strategy = ref([])
-const inject_eval_score = ref([])
-const inject_eval_result = ref([])
-const inject_eval_context = ref([])
-const inject_eval_params = ref([])
+//   inject_eval_strategy.value = []
+//   inject_eval_score.value = []
+//   inject_eval_result.value = []
+//   inject_eval_context.value = []
+//   inject_eval_params.value = []
+// }
+
+// const inject_name = ref('')
+// const inject_description = ref('')
+// const inject_target_tool = ref('MISP')
+
+// const inject_eval_strategy = ref([])
+// const inject_eval_score = ref([])
+// const inject_eval_result = ref([])
+// const inject_eval_context = ref([])
+// const inject_eval_params = ref([])
 
 function cancel() {
   router.push({ name: 'Scenario Overview', params: { uuid: props.uuid }, props: true })
@@ -138,7 +175,16 @@ function cancel() {
 
 async function saveScenario() {}
 
-function createNewInject() {}
+function createNewInject() {
+  const uuid = uuidv4()
+  const newInject = Object.assign({}, emptyInject)
+  newInject.uuid = uuid
+  unsavedNewInjectUUIDs.push(uuid)
+  const newInjectFlow = Object.assign({}, emptyInjectFlow)
+  newInjectFlow.inject_uuid = uuid
+  addNewInjectToSelectedScenario(newInject, newInjectFlow)
+  selectInject(uuid)
+}
 
 function createNewInjectEval() {}
 </script>
@@ -154,18 +200,19 @@ function createNewInjectEval() {}
       </button>
     </div>
 
-    <div class="flex flex-row gap-6">
+    <div class="flex flex-row gap-8">
       <div class="basis-2/5">
         <h2 class="text-2xl">Injects</h2>
         <div class="pl-2 flex flex-col gap-1 py-2">
           <Alert
+            v-if="inject_flows.length == 0"
             variant="warning"
             title="No inject available"
             message="Create an inject to get started."
           ></Alert>
           <div
             v-for="injectF in inject_flows"
-            :key="injectF.uuid"
+            :key="injectF.inject_uuid"
             :class="`
               flex flex-col gap-1 py-1 px-2 rounded select-none cursor-pointer
               hover:-translate-x-3 transition-all duration-75 border
@@ -259,7 +306,7 @@ function createNewInjectEval() {}
                   <label for="name" class="block text-gray-700 font-bold mb-2">Inject Name</label>
                   <input
                     type="text"
-                    v-model="inject_name"
+                    v-model="selectedInject.name"
                     class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
                     id="name"
                     placeholder="A name"
@@ -272,7 +319,7 @@ function createNewInjectEval() {}
                   >
                   <input
                     type="text"
-                    v-model="inject_description"
+                    v-model="selectedInject.description"
                     class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
                     id="description"
                     placeholder="A description"
@@ -284,7 +331,7 @@ function createNewInjectEval() {}
                     Target Tool
                   </label>
                   <select
-                    v-model="inject_target_tool"
+                    v-model="selectedInject.target_tool"
                     class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
                     id="target_tool"
                     placeholder="MISP"
@@ -315,12 +362,20 @@ function createNewInjectEval() {}
                       <div>
                         <div class="font-semibold pt-1 text-nowrap">Evaluation Strategy</div>
                         <div class="min-w-60">
-                          <input
-                            type="text"
-                            v-model="inject_eval_strategy[i]"
-                            class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                          <select
+                            v-model="selectedInject.inject_evaluation[i].evaluation_strategy"
+                            class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
                             placeholder="Evaluation Strategy"
-                          />
+                          >
+                            <option
+                              v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES"
+                              :key="strategy"
+                              :value="strategy"
+                              :title="strategy_info"
+                            >
+                              {{ strategy }}
+                            </option>
+                          </select>
                         </div>
                       </div>
                       <div>
@@ -329,9 +384,9 @@ function createNewInjectEval() {}
                           <input
                             type="number"
                             min="0"
-                            v-model="inject_eval_score[i]"
+                            v-model="selectedInject.inject_evaluation[i].score_range[1]"
                             class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                            placeholder="Evaluation Strategy"
+                            placeholder="20"
                           />
                         </div>
                       </div>
@@ -340,9 +395,9 @@ function createNewInjectEval() {}
                         <div class="min-w-60">
                           <input
                             type="text"
-                            v-model="inject_eval_result[i]"
+                            v-model="selectedInject.inject_evaluation[i].result"
                             class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                            placeholder="Evaluation Strategy"
+                            placeholder="Data created"
                           />
                         </div>
                       </div>
@@ -352,7 +407,7 @@ function createNewInjectEval() {}
                       <div class="min-w-60">
                         <JsonEditorVue
                           v-if="showEditor"
-                          v-model="inject_eval_context[i]"
+                          v-model="selectedInject.inject_evaluation[i].evaluation_context"
                           :mode="Mode.text"
                           :mainMenuBar="false"
                           :navigationBar="false"
@@ -368,7 +423,7 @@ function createNewInjectEval() {}
                   <h3 class="text-lg my-2">Evaluation Parameters</h3>
                   <JsonEditorVue
                     v-if="showEditor"
-                    v-model="inject_eval_params[i]"
+                    v-model="selectedInject.inject_evaluation[i].parameters"
                     :mode="Mode.text"
                     :mainMenuBar="false"
                     :indentation="4"

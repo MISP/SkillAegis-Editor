@@ -125,14 +125,14 @@ function initForm() {
   <div>
     <div>
       <div class="mb-4 flex flex-row-reverse gap-2">
-        <button class="btn select-none" @click="designScenario()">
-          <FontAwesomeIcon :icon="faPenRuler" class="fa-fw"></FontAwesomeIcon>Design Scenario
-        </button>
         <button class="btn btn-success select-none" @click="saveScenario()" :disabled="!canBeSaved">
           <FontAwesomeIcon :icon="faSave" class="fa-fw"></FontAwesomeIcon>Save Scenario
         </button>
         <button class="btn btn-danger select-none" @click="cancel()">
           <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>Cancel Changes
+        </button>
+        <button class="btn select-none" @click="designScenario()">
+          <FontAwesomeIcon :icon="faPenRuler" class="fa-fw"></FontAwesomeIcon>Design Scenario
         </button>
       </div>
 
