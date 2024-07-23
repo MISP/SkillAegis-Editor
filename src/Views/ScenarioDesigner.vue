@@ -78,11 +78,41 @@ const showEditor = ref(false)
 const canBeSaved = computed(() => {
   return hasValidChanges.value
 })
+const hasErrors = computed(() => {
+  return getFormErrors.value.length > 0
+})
+
+const getFormErrors = computed(() => {
+  const errors = []
+  if (!selectedInject.value) {
+    return errors
+  }
+  if (
+    selectedInject.value.name === undefined ||
+    selectedInject.value.name === null ||
+    selectedInject.value.name.length < 3
+  ) {
+    errors.push('selectedInject.name')
+  }
+  if (
+    selectedInject.value.description === undefined ||
+    selectedInject.value.description === null ||
+    selectedInject.value.description.length < 3
+  ) {
+    errors.push('selectedInject.description')
+  }
+  return errors
+})
 
 const hasValidChanges = computed(() => {
   if (!selectedInject.value) {
     return false
   }
+
+  if (hasErrors.value) {
+    return false
+  }
+
   const originalSelectedInject = originalSelectedScenario.value.injects.filter(
     (inj) => inj.uuid == selectedInjectFlowUUID.value
   )[0]
@@ -118,7 +148,6 @@ const hasValidChanges = computed(() => {
     return true
   }
 
-  let jsonChanges = false
   for (let i = 0; i < selectedInject.value.inject_evaluation.length; i++) {
     const inject_eval = selectedInject.value.inject_evaluation[i]
     const orig_inject_eval = originalSelectedInject.inject_evaluation[i]
@@ -140,13 +169,12 @@ const hasValidChanges = computed(() => {
         ? JSON.stringify(inject_eval.evaluation_context, undefined, 4)
         : inject_eval.evaluation_context
     let orig_context_str =
-      typeof orig_inject_eval.evaluation_context === 'object'
+      typeof orig_inject_eval?.evaluation_context === 'object'
         ? JSON.stringify(orig_inject_eval.evaluation_context, undefined, 4)
-        : orig_inject_eval.evaluation_context
+        : orig_inject_eval?.evaluation_context
 
     if (context_str != orig_context_str) {
-      jsonChanges = true
-      break
+      return true
     }
 
     /* evaluation_context */
@@ -171,12 +199,11 @@ const hasValidChanges = computed(() => {
         : orig_inject_eval.parameters
 
     if (params_str != orig_params_str) {
-      jsonChanges = true
-      break
+      return true
     }
   }
 
-  return jsonChanges
+  return false
 })
 
 const selectedScenario = computed(() => {
@@ -194,15 +221,7 @@ const emptyInject = {
   target_tool: 'MISP',
   name: '',
   action: '',
-  inject_evaluation: [
-    {
-      evaluation_strategy: 'data_filtering',
-      result: '',
-      score_range: [0, 20],
-      evaluation_context: {},
-      parameters: []
-    }
-  ]
+  inject_evaluation: []
 }
 const emptyInjectFlow = {
   inject_uuid: '',
@@ -212,6 +231,13 @@ const emptyInjectFlow = {
     followed_by: [],
     trigger: []
   }
+}
+const emptyInjectEvaluation = {
+  parameters: [],
+  result: '',
+  evaluation_strategy: 'data_filtering',
+  evaluation_context: {},
+  score_range: [0, 20]
 }
 
 const injectByUUID = computed(() => {
@@ -308,7 +334,14 @@ async function deleteInject(inject_uuid) {
   ajaxFeedback(result)
 }
 
-function createNewInjectEval() {}
+function createNewInjectEval() {
+  const newInjectEvaluation = JSON.parse(JSON.stringify(emptyInjectEvaluation))
+  selectedInject.value.inject_evaluation.push(newInjectEvaluation)
+}
+
+function deleteEvaluation(evaluationIndex) {
+  selectedInject.value.inject_evaluation.splice(evaluationIndex, 1)
+}
 </script>
 
 <template>
@@ -318,7 +351,7 @@ function createNewInjectEval() {}
         <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>Cancel Changes
       </button>
       <button
-        :class="`btn btn-success select-none ${canBeSaved ? 'highlight' : ''}`"
+        :class="`btn btn-success select-none ${canBeSaved ? 'highlight-success' : ''}`"
         @click="saveChanges()"
         :disabled="!canBeSaved"
       >
@@ -344,7 +377,7 @@ function createNewInjectEval() {}
               hover:-translate-x-3 transition-all duration-75 border
               ${
                 selectedInjectFlowUUID == injectF.inject_uuid
-                  ? 'border-blue-400 bg-blue-200 -translate-x-2'
+                  ? 'border-blue-400 bg-blue-100 -translate-x-2'
                   : 'border-slate-400 bg-slate--200'
               }
             `"
@@ -363,7 +396,7 @@ function createNewInjectEval() {}
               </span>
               <span class="ml-auto">
                 <button
-                  class="hidden group-hover:inline-block btn btn-sm btn-danger select-none"
+                  class="hidden group-hover:inline-block btn btn-sm btn-danger select-none !border-slate-400"
                   @click="deleteInject(injectF.inject_uuid)"
                 >
                   <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
@@ -450,7 +483,9 @@ function createNewInjectEval() {}
                   <input
                     type="text"
                     v-model="selectedInject.name"
-                    class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                    :class="`shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 ${
+                      getFormErrors.includes('selectedInject.name') ? 'form-error' : ''
+                    }`"
                     id="name"
                     placeholder="A name"
                   />
@@ -463,7 +498,9 @@ function createNewInjectEval() {}
                   <input
                     type="text"
                     v-model="selectedInject.description"
-                    class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                    :class="`shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400 ${
+                      getFormErrors.includes('selectedInject.description') ? 'form-error' : ''
+                    }`"
                     id="description"
                     placeholder="A description"
                   />
@@ -492,7 +529,7 @@ function createNewInjectEval() {}
               </div>
 
               <div class="flex flex-row gap-6">
-                <div class="basis-1/4">
+                <div class="basis-1/3">
                   <label for="name" class="block text-gray-700 font-bold mb-1">Triggers</label>
                   <select
                     v-model="selectedInjectFlow.sequence.trigger"
@@ -512,13 +549,39 @@ function createNewInjectEval() {}
                     </option>
                   </select>
                 </div>
+                <div class="basis-2/3">
+                  <label for="name" class="block text-gray-700 font-bold mb-1"
+                    >Inject Completion Requirement</label
+                  >
+                  <select
+                    v-model="selectedInjectFlow.requirements.inject_uuid"
+                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
+                    id="requirement"
+                  >
+                    <option :value="undefined">- No requirements -</option>
+                    <option
+                      v-for="(inject, uuid) in injectByUUID"
+                      :key="uuid"
+                      :value="inject.uuid"
+                      :title="uuid"
+                    >
+                      {{ inject.name }}
+                    </option>
+                  </select>
+                </div>
               </div>
             </div>
           </form>
 
           <div>
-            <h2 class="text-xl mb-2">Inject Evaluation</h2>
+            <h2 class="text-xl mb-2">Inject Evaluations</h2>
             <div>
+              <Alert
+                v-if="selectedInject?.inject_evaluation.length == 0"
+                variant="info"
+                title="No evaluation available"
+                message="Add an inject to get started."
+              ></Alert>
               <div
                 v-for="(inject_eval, i) in selectedInject?.inject_evaluation"
                 :key="i"
@@ -526,9 +589,15 @@ function createNewInjectEval() {}
               >
                 <div class="relative">
                   <span
-                    class="font-semibold absolute px-1 -top-1 -left-2 bg-slate-300 border-slate-400 text-slate-700 rounded-br rounded-tl border-b border-r"
+                    class="font-semibold select-none absolute px-1 -top-1 -left-2 bg-slate-300 border-slate-400 text-slate-700 rounded-br rounded-tl border-b border-r"
                   >
-                    Evaluation {{ i + 1 }}
+                    <span>Evaluation {{ i + 1 }}</span>
+                    <button
+                      class="btn btn-sm btn-danger select-none ml-1"
+                      @click="deleteEvaluation(i)"
+                    >
+                      <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
+                    </button>
                   </span>
                   <div class="flex gap-3 mt-5">
                     <div class="basis-1/3">
@@ -605,10 +674,9 @@ function createNewInjectEval() {}
                 </div>
               </div>
 
-              <div class="flex justify-end">
+              <div class="flex justify-center">
                 <button class="btn btn-success select-none" @click="createNewInjectEval()">
-                  <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>Create New
-                  Evaluation
+                  <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>Add New Evaluation
                 </button>
               </div>
             </div>
@@ -620,7 +688,14 @@ function createNewInjectEval() {}
 </template>
 
 <style scoped>
-button.highlight {
+button.highlight-success {
   @apply bg-green-400;
+}
+input.form-error {
+  @apply border-2 border-red-400;
+}
+
+label {
+  @apply select-none;
 }
 </style>
