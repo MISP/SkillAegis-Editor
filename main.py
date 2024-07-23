@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-ACTIVE_EXERCISES_DIR = "active_exercises"
+ACTIVE_EXERCISES_DIR = "exercises"
 script_dir = Path(__file__).parent / ACTIVE_EXERCISES_DIR
 EXERCISE_DIR = Path('/home/sami/git/SkillAegis') / ACTIVE_EXERCISES_DIR
 
@@ -137,7 +137,7 @@ def editScenario(updatedScenario) -> Union[dict, str]:
     return scenario
 
 
-def deleteScenario(uuid: str):
+def deleteScenario(uuid: str) -> Union[bool, str]:
     global scenarios, scenarioByUUID
 
     if uuid in scenarioFilenameByUUID:
@@ -151,6 +151,67 @@ def deleteScenario(uuid: str):
         return True
     return 'Scenario not found'
 
+
+def saveInject(scenario_uuid: str, injectToSave, injectFlowToSave) -> Union[dict, str]:
+    global scenarios, scenarioByUUID
+
+    if scenario_uuid not in scenarioByUUID:
+        return 'Invalid scenario'
+    scenario = scenarioByUUID[scenario_uuid]
+
+    # Search inject in scenario and create/update it
+    injectToSave = injectToSave.dict()
+    found = False
+    for i, inject in enumerate(scenario['injects']):
+        if inject['uuid'] == injectToSave['uuid']:
+            scenario['injects'][i] = injectToSave
+            found = True
+    if not found:
+        scenario['injects'].append(injectToSave)
+
+    injectFlowToSave = injectFlowToSave.dict()
+    for i, injectF in enumerate(scenario['inject_flow']):
+        if injectF['inject_uuid'] == injectFlowToSave['inject_uuid']:
+            scenario['inject_flow'][i] = injectFlowToSave
+            found = True
+    if not found:
+        scenario['inject_flow'].append(injectFlowToSave)
+
+    saveResult = saveScenario(scenario_uuid, scenario)
+    return saveResult
+
+
+def saveScenario(scenario_uuid: str, scenario: dict) -> Union[bool, str]:
+    global scenarioFilenameByUUID
+    filename = scenarioFilenameByUUID[scenario_uuid]
+    try:
+        with open(EXERCISE_DIR / filename, 'w') as f:
+            json.dump(scenario, f)
+    except Exception as e:
+        print(e)
+        return e
+    return True
+
+
+def removeInject(scenario_uuid: str, inject_uuid: str) -> Union[bool, str]:
+    global scenarios, scenarioByUUID
+
+    if scenario_uuid not in scenarioByUUID:
+        return 'Invalid scenario'
+    scenario = scenarioByUUID[scenario_uuid]
+
+    for i, inject in enumerate(scenario['injects']):
+        if inject['uuid'] == inject_uuid:
+            scenario['injects'].pop(i)
+    
+    for i, injectF in enumerate(scenario['inject_flow']):
+        if injectF['inject_uuid'] == inject_uuid:
+            scenario['inject_flow'].pop(i)
+
+    saveResult = saveScenario(scenario_uuid, scenario)
+    return saveResult
+
+
 class Exercise(BaseModel):
     name: str
     namespace: str
@@ -158,6 +219,22 @@ class Exercise(BaseModel):
     uuid: str | None = None
     version: str | None = None
     meta: dict | None = {}
+
+
+class Inject(BaseModel):
+    name: str
+    action: str
+    target_tool: str | None = None
+    uuid: str | None = None
+    description: str | None = None
+    inject_evaluation: list | None = []
+
+
+class InjectFlow(BaseModel):
+    inject_uuid: str
+    description: str | None = None
+    requirements: dict | None = None
+    sequence: dict | None = None
 
 
 @app.get("/")
@@ -204,4 +281,21 @@ def scenarios_delete(uuid: str):
     if result is True:
         return success(f"Scenario deleted")
     return error('Could not delete scenario', result)
+
+
+@app.post("/scenarios/save-inject/{scenario_uuid}")
+def save_inject(scenario_uuid: str, inject: Inject, injectFlow: InjectFlow):
+    result = saveInject(scenario_uuid, inject, injectFlow)
+    if result is True:
+        return success(f"Inject saved")
+    return error('Could not save inject', result)
+
+
+
+@app.post("/scenarios/delete-inject/{scenario_uuid}/{inject_uuid}")
+def save_inject(scenario_uuid: str, inject_uuid: str):
+    result = removeInject(scenario_uuid, inject_uuid)
+    if result is True:
+        return success(f"Inject removed")
+    return error('Could not remove inject', result)
 

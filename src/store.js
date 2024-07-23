@@ -32,3 +32,8 @@ export function addNewInjectToSelectedScenario(inject, injectFlow) {
     scenarioByUUID.value[store.selected_scenario].injects.push(inject)
     scenarioByUUID.value[store.selected_scenario].inject_flow.push(injectFlow)
 }
+
+export function removeInjectFromSelectedScenario(inject_uuid) {
+    scenarioByUUID.value[store.selected_scenario].injects = scenarioByUUID.value[store.selected_scenario].injects.filter((inj) => inj.uuid != inject_uuid)
+    scenarioByUUID.value[store.selected_scenario].inject_flow = scenarioByUUID.value[store.selected_scenario].inject_flow.filter((inj) => inj.inject_uuid != inject_uuid)
+}

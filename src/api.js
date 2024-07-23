@@ -10,6 +10,7 @@ const endpoints = {
     'scenarios-edit': '/scenarios/edit',
     'scenarios-delete': '/scenarios/delete',
     'inject-save': '/scenarios/save-inject',
+    'inject-delete': '/scenarios/delete-inject',
 }
 
 async function get(url) {
@@ -82,6 +83,12 @@ export async function saveInject(scenario_uuid, inject, injectFlow) {
     const payload = {
         inject: inject,
         injectFlow: injectFlow,
+    }
+    return await post(url, payload)
+}
+export async function removeInject(scenario_uuid, inject_uuid) {
+    const url = endpoints['inject-delete'] + `/${scenario_uuid}/${inject_uuid}`
+    const payload = {
     }
     return await post(url, payload)
 }

@@ -59,8 +59,12 @@ const messages = computed(() => {
       :class="`text-${variantClass}-700 text-lg mx-3`"
     ></FontAwesomeIcon>
     <strong class="mr-2">{{ props.title }}</strong>
-    <pre class="text-slate-700 p-1 font-light" v-for="(message, i) in messages" :key="i">
+    <p
+      class="text-slate-700 p-1 font-light whitespace-pre"
+      v-for="(message, i) in messages"
+      :key="i"
+    >
       {{ message }}
-    </pre>
+    </p>
   </div>
 </template>
