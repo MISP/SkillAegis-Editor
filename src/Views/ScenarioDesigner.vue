@@ -203,6 +203,12 @@ const hasValidChanges = computed(() => {
     }
   }
 
+  if (
+    originalSelectedInject.inject_evaluation.length != selectedInject.value.inject_evaluation.length
+  ) {
+    return true
+  }
+
   return false
 })
 
