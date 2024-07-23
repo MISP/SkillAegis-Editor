@@ -53,6 +53,11 @@ body,
     @apply px-1 py-0;
 }
 
+.btn-xs {
+    @apply px-0.5 py-0;
+    @apply text-sm;
+}
+
 .btn:not(:disabled) {
     @apply hover:bg-slate-200 hover:border-slate-300;
     @apply active:scale-90

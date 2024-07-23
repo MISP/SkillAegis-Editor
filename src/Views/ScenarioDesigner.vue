@@ -1,6 +1,7 @@
 <script setup>
 import { v4 as uuidv4 } from 'uuid'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { Sortable } from 'sortablejs-vue3'
 import {
   addNewInjectToSelectedScenario,
   removeInjectFromSelectedScenario,
@@ -375,99 +376,112 @@ function deleteEvaluation(evaluationIndex) {
             title="No inject available"
             message="Create an inject to get started."
           ></Alert>
-          <div
-            v-for="injectF in inject_flow"
-            :key="injectF.inject_uuid"
-            :class="`
-              group flex flex-col gap-1 py-1 px-2 rounded select-none cursor-pointer
-              hover:-translate-x-3 transition-all duration-75 border
-              ${
-                selectedInjectFlowUUID == injectF.inject_uuid
-                  ? 'border-blue-400 bg-blue-100 -translate-x-2'
-                  : 'border-slate-400 bg-slate--200'
-              }
-            `"
-            @click="selectInject(injectF.inject_uuid)"
+          <Sortable
+            :list="inject_flow"
+            item-key="inject_uuid"
+            tag="div"
+            :options="{
+              animation: 150,
+              ghostClass: 'ghost',
+              dragClass: 'drag',
+              forceFallback: true
+            }"
+            class="flex flex-col gap-1"
           >
-            <div class="flex flex-row gap-2 items-center">
-              <span class="font-semibold">
-                {{ injectByUUID[injectF.inject_uuid].name }}
-              </span>
-              <FontAwesomeIcon :icon="faMinus" class="fa-fw"></FontAwesomeIcon>
-              <span class="font-light">
-                <span v-if="injectByUUID[injectF.inject_uuid].description">{{
-                  injectByUUID[injectF.inject_uuid].description
-                }}</span>
-                <span v-else class="font-light text-sm text-gray-500">- No description -</span>
-              </span>
-              <span class="ml-auto">
-                <button
-                  class="hidden group-hover:inline-block btn btn-sm btn-danger select-none !border-slate-400"
-                  @click="deleteInject(injectF.inject_uuid)"
-                >
-                  <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
-                </button>
-              </span>
-            </div>
+            <template #item="{ element }">
+              <div
+                @click="selectInject(element.inject_uuid)"
+                :class="`
+                    group flex flex-col gap-1 py-1 px-2 rounded select-none cursor-pointer border
+                    hover:-translate-x-1 
+                    ${
+                      selectedInjectFlowUUID == element.inject_uuid
+                        ? 'border-blue-400 bg-blue-100 -translate-x-2'
+                        : 'border-slate-400 bg-slate-50'
+                    }
+                  `"
+              >
+                <div class="flex flex-row gap-2 items-center">
+                  <span class="font-semibold">
+                    {{ injectByUUID[element.inject_uuid].name }}
+                  </span>
+                  <FontAwesomeIcon :icon="faMinus" class="fa-fw"></FontAwesomeIcon>
+                  <span class="font-light">
+                    <span v-if="injectByUUID[element.inject_uuid].description">{{
+                      injectByUUID[element.inject_uuid].description
+                    }}</span>
+                    <span v-else class="font-light text-sm text-gray-500">- No description -</span>
+                  </span>
+                  <span class="ml-auto">
+                    <button
+                      class="hidden group-hover:inline-block btn btn-xs btn-danger select-none !border-slate-400"
+                      @click="deleteInject(element.inject_uuid)"
+                    >
+                      <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
+                    </button>
+                  </span>
+                </div>
 
-            <div class="flex flex-row gap-3 text-xs">
-              <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
-                <div class="justify-start text-nowrap">
-                  <FontAwesomeIcon :icon="faFingerprint" class="fa-fw"></FontAwesomeIcon>
-                  UUID
-                </div>
-                <div class="bg-slate-50 p-0.5 rounded">
-                  <span class="text-nowrap font-mono font-light text-2xs text-gray-800">{{
-                    injectF.inject_uuid
-                  }}</span>
-                </div>
-              </span>
+                <div class="flex flex-row gap-3 text-xs">
+                  <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
+                    <div class="justify-start text-nowrap">
+                      <FontAwesomeIcon :icon="faFingerprint" class="fa-fw"></FontAwesomeIcon>
+                      UUID
+                    </div>
+                    <div class="bg-slate-50 p-0.5 rounded">
+                      <span class="text-nowrap font-mono font-light text-2xs text-gray-800">{{
+                        element.inject_uuid
+                      }}</span>
+                    </div>
+                  </span>
 
-              <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
-                <div class="justify-start text-nowrap">
-                  <FontAwesomeIcon :icon="faCirclePlay" class="fa-fw"></FontAwesomeIcon>
-                  Trigger
-                </div>
-                <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
-                  <span
-                    v-if="
-                      injectFlowByUUID[injectF.inject_uuid].sequence.trigger.filter(
-                        (t) => t != '- No trigger -'
-                      ).length > 0
-                    "
-                    >{{
-                      injectFlowByUUID[injectF.inject_uuid].sequence.trigger
-                        .filter((t) => t != '- No trigger -')
-                        .join(', ')
-                    }}</span
-                  >
-                  <span v-else class="text-nowrap font-light text-xs text-gray-500"
-                    >- No trigger -</span
-                  >
-                </span>
-              </span>
+                  <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
+                    <div class="justify-start text-nowrap">
+                      <FontAwesomeIcon :icon="faCirclePlay" class="fa-fw"></FontAwesomeIcon>
+                      Trigger
+                    </div>
+                    <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
+                      <span
+                        v-if="
+                          injectFlowByUUID[element.inject_uuid].sequence.trigger.filter(
+                            (t) => t != '- No trigger -'
+                          ).length > 0
+                        "
+                        >{{
+                          injectFlowByUUID[element.inject_uuid].sequence.trigger
+                            .filter((t) => t != '- No trigger -')
+                            .join(', ')
+                        }}</span
+                      >
+                      <span v-else class="text-nowrap font-light text-xs text-gray-500"
+                        >- No trigger -</span
+                      >
+                    </span>
+                  </span>
 
-              <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
-                <div class="justify-start text-nowrap">
-                  <FontAwesomeIcon :icon="faScrewdriverWrench" class="fa-fw"></FontAwesomeIcon>
-                  Target Tool
-                </div>
-                <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
-                  {{ injectByUUID[injectF.inject_uuid].target_tool }}
-                </span>
-              </span>
+                  <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
+                    <div class="justify-start text-nowrap">
+                      <FontAwesomeIcon :icon="faScrewdriverWrench" class="fa-fw"></FontAwesomeIcon>
+                      Target Tool
+                    </div>
+                    <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
+                      {{ injectByUUID[element.inject_uuid].target_tool }}
+                    </span>
+                  </span>
 
-              <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
-                <div class="justify-start text-nowrap">
-                  <FontAwesomeIcon :icon="faListCheck" class="fa-fw"></FontAwesomeIcon>
-                  Inject Evaluation
+                  <span class="bg-slate-300 rounded py-0.5 px-1 inline-flex flex-col font-semibold">
+                    <div class="justify-start text-nowrap">
+                      <FontAwesomeIcon :icon="faListCheck" class="fa-fw"></FontAwesomeIcon>
+                      Inject Evaluation
+                    </div>
+                    <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
+                      {{ injectByUUID[element.inject_uuid].inject_evaluation.length }}
+                    </span>
+                  </span>
                 </div>
-                <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
-                  {{ injectByUUID[injectF.inject_uuid].inject_evaluation.length }}
-                </span>
-              </span>
-            </div>
-          </div>
+              </div>
+            </template>
+          </Sortable>
         </div>
 
         <div class="flex justify-end">
@@ -703,5 +717,14 @@ input.form-error {
 
 label {
   @apply select-none;
+}
+
+.ghost {
+  @apply bg-white;
+  @apply border-dashed;
+}
+
+.drag {
+  @apply !opacity-100;
 }
 </style>
