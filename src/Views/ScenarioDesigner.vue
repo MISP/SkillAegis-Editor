@@ -475,7 +475,7 @@ function createNewInjectEval() {}
                   </label>
                   <select
                     v-model="selectedInject.target_tool"
-                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
                     id="target_tool"
                     placeholder="MISP"
                   >
@@ -496,7 +496,7 @@ function createNewInjectEval() {}
                   <label for="name" class="block text-gray-700 font-bold mb-1">Triggers</label>
                   <select
                     v-model="selectedInjectFlow.sequence.trigger"
-                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
                     id="target_tool"
                     placeholder="MISP"
                     multiple
@@ -537,7 +537,7 @@ function createNewInjectEval() {}
                         <div class="min-w-60">
                           <select
                             v-model="selectedInject.inject_evaluation[i].evaluation_strategy"
-                            class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                            class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
                             placeholder="Evaluation Strategy"
                           >
                             <option

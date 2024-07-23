@@ -55,6 +55,28 @@ const exercise_uuid = ref('')
 const exercise_version = ref('')
 const exercise_meta = ref('{}')
 
+const exercise_meta_author = ref('MISP Project')
+const exercise_meta_level = ref('Beginner')
+const exercise_meta_priority = ref(10)
+
+watch(
+  [exercise_meta_author, exercise_meta_level, exercise_meta_priority],
+  ([new_exercise_meta_author, new_exercise_meta_level, new_exercise_meta_priority]) => {
+    const meta_json = JSON.parse(exercise_meta.value)
+    meta_json['author'] = new_exercise_meta_author
+    meta_json['level'] = new_exercise_meta_level
+    meta_json['priority'] = new_exercise_meta_priority
+    exercise_meta.value = JSON.stringify(meta_json, undefined, 4)
+  }
+)
+
+watch(exercise_meta, (new_exercise_meta) => {
+  const meta_json = JSON.parse(new_exercise_meta)
+  exercise_meta_author.value = meta_json['author']
+  exercise_meta_level.value = meta_json['level']
+  exercise_meta_priority.value = meta_json['priority']
+})
+
 const injectCount = computed(() => {
   return selectedScenario.value?.inject_flow.length || 0
 })
@@ -163,7 +185,7 @@ function initForm() {
               />
             </div>
 
-            <div>
+            <div class="basis-1/4">
               <label for="uuid" class="block text-gray-700 font-bold mb-2">Scenario UUID</label>
               <input
                 type="text"
@@ -175,7 +197,7 @@ function initForm() {
               />
             </div>
 
-            <div>
+            <div class="shrink">
               <label for="uuid" class="block text-gray-700 font-bold mb-2">Scenario Version</label>
               <input
                 type="text"
@@ -184,6 +206,51 @@ function initForm() {
                 id="uuid"
                 placeholder="20240717"
                 disabled
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-row gap-6">
+            <div class="">
+              <label for="name" class="block text-gray-700 font-bold mb-2"
+                >Scenario Meta Author</label
+              >
+              <input
+                type="text"
+                v-model="exercise_meta_author"
+                class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                id="name"
+                placeholder="MISP Project"
+              />
+            </div>
+
+            <div>
+              <label for="namespace" class="block text-gray-700 font-bold mb-2"
+                >Scenario Meta Level</label
+              >
+              <select
+                v-model="exercise_meta_level"
+                class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400 bg-white"
+                id="namespace"
+                placeholder="Beginner"
+              >
+                <option value="Beginner">Beginner</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="uuid" class="block text-gray-700 font-bold mb-2"
+                >Scenario Meta Priority</label
+              >
+              <input
+                type="number"
+                min="0"
+                v-model="exercise_meta_priority"
+                class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                id="uuid"
+                placeholder="10"
               />
             </div>
           </div>
@@ -203,7 +270,7 @@ function initForm() {
             </div>
             <div class="basis-1/4">
               <label for="name" class="block text-gray-700 font-bold mb-2">Scenario Meta</label>
-              <div class="border-slate-200 border p-3 rounded w-full">
+              <div class="border-slate-200 border p-3 rounded w-full bg-white">
                 <div class="flex gap-1">
                   <span class="font-bold">
                     <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Injects
@@ -218,7 +285,7 @@ function initForm() {
                 </div>
                 <div class="flex gap-1">
                   <span class="font-bold">
-                    <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Target Tools
+                    <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Target Tools Used
                   </span>
                   <span
                     :class="`ml-auto font-semibold ${
@@ -229,6 +296,15 @@ function initForm() {
                     }}</span
                   >
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="basis-1/2">
+              <label for="name" class="block text-gray-700 font-bold mb-2">Scenario Payloads</label>
+              <div class="border-slate-200 border p-3 rounded w-full bg-white">
+                <p class="text-slate-600 italic">Feature not supported yet</p>
               </div>
             </div>
           </div>
