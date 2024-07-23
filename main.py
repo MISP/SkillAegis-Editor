@@ -251,6 +251,16 @@ def scenarios_index():
     }
 
 
+@app.post("/scenarios/reload")
+def scenarios_reload():
+    global scenarios, scenarioByUUID
+    reloadJsonFiles()
+    return {
+        'scenarios': scenarios,
+        'scenario_by_uuid': scenarioByUUID,
+    }
+
+
 @app.get("/scenarios/view/{uuid}")
 def scenarios_view(uuid: str):
     scenario = scenarioByUUID.get(uuid, None)

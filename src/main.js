@@ -40,7 +40,7 @@ router.beforeEach(async (to, from) => {
     if (!hasScenarios()) {
         fetchScenarios()
     }
-    if (from.name == undefined && to.name == 'Scenario Overview' && to?.params?.uuid !== undefined) {
+    if (from.name == undefined && ['Scenario Overview', 'Scenario Designer'].includes(to.name) && to?.params?.uuid !== undefined) {
         store.selected_scenario = to.params.uuid
     }
     if (to?.meta?.requiresScenarioSelection === true && store.selected_scenario === null) {

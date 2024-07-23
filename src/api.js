@@ -4,6 +4,7 @@ import { store } from '@/store.js'
 const URL = process.env.NODE_ENV === "production" ? undefined : "http://localhost:5000";
 
 const endpoints = {
+    'scenarios-reload': '/scenarios/reload',
     'scenarios-index': '/scenarios/index',
     'scenarios-view': '/scenarios/view',
     'scenarios-add': '/scenarios/add',
@@ -58,6 +59,11 @@ export async function fetchScenarios() {
 
 export async function fetchScenario() {
     return await get(endpoints['scenarios-view'])
+}
+
+export async function forceReload() {
+    const data = await post(endpoints['scenarios-reload'])
+    store.scenarios = data.scenarios
 }
 
 export async function addScenario(payload) {

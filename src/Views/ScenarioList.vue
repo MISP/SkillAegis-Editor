@@ -3,14 +3,15 @@ import { store } from '@/store.js'
 import { ref, watch, onUpdated, onBeforeMount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ajaxFeedback, toast } from '@/main.js'
-import { deleteScenario as doDeleteScenario, fetchScenarios } from '@/api.js'
+import { deleteScenario as doDeleteScenario, fetchScenarios, forceReload } from '@/api.js'
 import {
   faWarning,
   faHashtag,
   faSpinner,
   faEdit,
   faTrash,
-  faPlus
+  faPlus,
+  faArrowsRotate
 } from '@fortawesome/free-solid-svg-icons'
 
 const route = useRoute()
@@ -45,7 +46,20 @@ async function fetchData() {
   loading.value = true
 
   try {
-    const data = await fetchScenarios()
+    await fetchScenarios()
+  } catch (err) {
+    error.value = err.toString()
+  } finally {
+    loading.value = false
+  }
+}
+
+async function reload() {
+  error.value = null
+  loading.value = true
+
+  try {
+    await forceReload()
   } catch (err) {
     error.value = err.toString()
   } finally {
@@ -83,10 +97,14 @@ async function deleteScenario(uuid) {
     ></Alert>
 
     <div v-if="scenarios.length > 0">
-      <div class="mb-2 flex flex-row-reverse">
+      <div class="mb-2 flex flex-row-reverse gap-2">
         <button class="btn btn-success" @click="createScenario()">
           <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>
           Create Scenario
+        </button>
+        <button class="btn" @click="reload()">
+          <FontAwesomeIcon :icon="faArrowsRotate" class="fa-fw"></FontAwesomeIcon>
+          Reload Scenarios
         </button>
       </div>
 
@@ -100,7 +118,6 @@ async function deleteScenario(uuid) {
             <th class="border-b border-slate-300 p-3 text-left">Description</th>
             <th class="border-b border-slate-300 p-3 text-left">UUID</th>
             <th class="border-b border-slate-300 p-3 text-left">Version</th>
-            <!-- <th class="border-b border-slate-300 p-3 text-left">Meta</th> -->
             <th class="border-b border-slate-300 p-3 text-center text-nowrap">
               <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> Injects
             </th>
@@ -142,14 +159,6 @@ async function deleteScenario(uuid) {
             >
               {{ scenario.exercise.version }}
             </td>
-            <!-- <td
-              class="border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 p-1"
-            >
-              <pre
-                class="text-xs bg-gray-200 border border-gray-300 text-black p-1 rounded max-h-17 overflow-auto"
-                >{{ scenario.exercise.meta }}</pre
-              >
-            </td> -->
             <td
               class="border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 p-1 text-center font-semibold"
             >

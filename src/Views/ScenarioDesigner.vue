@@ -4,6 +4,7 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import {
   addNewInjectToSelectedScenario,
   removeInjectFromSelectedScenario,
+  updateInjectToSelectedScenario,
   selectedScenario as originalSelectedScenario
 } from '@/store.js'
 import { Mode } from 'vanilla-jsoneditor'
@@ -213,8 +214,6 @@ const emptyInjectFlow = {
   }
 }
 
-const unsavedNewInjectUUIDs = []
-
 const injectByUUID = computed(() => {
   const injects = {}
   if (selectedScenario.value) {
@@ -280,15 +279,19 @@ async function saveChanges() {
   const injectFlowToSave = JSON.parse(JSON.stringify(selectedInjectFlow.value))
 
   const result = await saveInject(props.uuid, injectTosave, injectFlowToSave)
+  if (result.success) {
+    updateInjectToSelectedScenario(injectTosave, injectFlowToSave)
+    originalInject = JSON.parse(JSON.stringify(injectTosave))
+    originalInjectFlow = JSON.parse(JSON.stringify(injectFlowToSave))
+  }
   ajaxFeedback(result)
 }
 
 function createNewInject() {
   const uuid = uuidv4()
-  const newInject = Object.assign({}, emptyInject)
+  const newInject = JSON.parse(JSON.stringify(emptyInject))
   newInject.uuid = uuid
-  unsavedNewInjectUUIDs.push(uuid)
-  const newInjectFlow = Object.assign({}, emptyInjectFlow)
+  const newInjectFlow = JSON.parse(JSON.stringify(emptyInjectFlow))
   newInjectFlow.inject_uuid = uuid
   addNewInjectToSelectedScenario(newInject, newInjectFlow)
   selectInject(uuid)
