@@ -18,17 +18,10 @@ import {
   faScrewdriverWrench,
   faTimes
 } from '@fortawesome/free-solid-svg-icons'
-import {
-  ref,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  onActivated,
-  onDeactivated,
-  nextTick
-} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, onActivated, onDeactivated } from 'vue'
 import JsonEditorVue from 'json-editor-vue'
+import { saveInject } from '@/api'
+import { ajaxFeedback } from '@/main'
 
 const props = defineProps({
   uuid: String
@@ -38,6 +31,12 @@ const ALLOWED_STRATEGIES = {
   data_filtering: 'Filter Event data',
   query_mirror: 'Perform the same query against MISP',
   query_search: 'Perform a search query on MISP and compare the returned result'
+}
+const ALLOWED_TRIGGERS = {
+  startex: 'Start of the exercise'
+}
+const ALLOWED_TARGET_TOOLS = {
+  MISP: 'MISP'
 }
 
 const route = useRoute()
@@ -84,6 +83,9 @@ const hasValidChanges = computed(() => {
   const originalSelectedInject = originalSelectedScenario.value.injects.filter(
     (inj) => inj.uuid == selectedInjectFlowUUID.value
   )[0]
+  const originalSelectedInjectFlow = originalSelectedScenario.value.inject_flow.filter(
+    (inj) => inj.inject_uuid == selectedInjectFlowUUID.value
+  )[0]
 
   const metaChanges =
     originalSelectedInject.name != selectedInject.value.name ||
@@ -91,7 +93,25 @@ const hasValidChanges = computed(() => {
       originalSelectedInject.description != selectedInject.value.description) ||
     originalSelectedInject.target_tool != selectedInject.value.target_tool
 
-  if (metaChanges) {
+  let sequenceWithoutFakeOptions = {}
+  if (typeof selectedInjectFlow.value.sequence === 'object') {
+    sequenceWithoutFakeOptions = selectedInjectFlow.value.sequence
+    sequenceWithoutFakeOptions.trigger = sequenceWithoutFakeOptions.trigger.filter(
+      (item) => item != 'null'
+    )
+  }
+  let sequence_str =
+    typeof selectedInjectFlow.value.sequence === 'object'
+      ? JSON.stringify(sequenceWithoutFakeOptions, undefined, 4)
+      : selectedInjectFlow.value.sequence
+  let orig_sequence_str =
+    typeof originalSelectedInjectFlow.sequence === 'object'
+      ? JSON.stringify(originalSelectedInjectFlow.sequence, undefined, 4)
+      : originalSelectedInjectFlow.sequence
+
+  const injectFlowMetaChanges = sequence_str != orig_sequence_str
+
+  if (metaChanges || injectFlowMetaChanges) {
     return true
   }
 
@@ -109,7 +129,6 @@ const hasValidChanges = computed(() => {
         JSON.parse(inject_eval.parameters)
       }
     } catch (error) {
-      console.log('error C')
       return false
     }
 
@@ -136,7 +155,6 @@ const hasValidChanges = computed(() => {
         JSON.parse(inject_eval.parameters)
       }
     } catch (error) {
-      console.log('error P')
       return false
     }
 
@@ -163,9 +181,10 @@ const selectedScenario = computed(() => {
 })
 
 let originalInject = {}
+let originalInjectFlow = {}
 const selectedInject = ref(null)
-const selectedInjectFlowUUID = ref(null)
 const selectedInjectFlow = ref(null)
+const selectedInjectFlowUUID = ref(null)
 
 const emptyInject = {
   uuid: '',
@@ -183,6 +202,7 @@ const emptyInject = {
   ]
 }
 const emptyInjectFlow = {
+  fake: '123',
   inject_uuid: '',
   requirements: {},
   sequence: {
@@ -195,27 +215,34 @@ const unsavedNewInjectUUIDs = []
 
 const injectByUUID = computed(() => {
   const injects = {}
-  selectedScenario.value.injects.forEach((inj) => {
-    injects[inj.uuid] = inj
-  })
+  if (selectedScenario.value) {
+    selectedScenario.value.injects.forEach((inj) => {
+      injects[inj.uuid] = inj
+    })
+  }
   return injects
 })
 
 const injectFlowByUUID = computed(() => {
   const injectF = {}
-  inject_flows.value.forEach((inj) => {
-    injectF[inj.inject_uuid] = inj
-  })
+  if (selectedScenario.value) {
+    selectedScenario.value.inject_flow.forEach((inj) => {
+      injectF[inj.inject_uuid] = inj
+    })
+  }
   return injectF
 })
 
-const inject_flows = computed(() => {
+const inject_flow = computed(() => {
   return selectedScenario.value?.inject_flow || []
 })
 
 function selectInject(uuid) {
-  revertInjectChanges()
+  if (selectedInjectFlowUUID.value) {
+    revertInjectChanges()
+  }
   originalInject = JSON.parse(JSON.stringify(injectByUUID.value[uuid]))
+  originalInjectFlow = JSON.parse(JSON.stringify(injectFlowByUUID.value[uuid]))
   selectedInject.value = injectByUUID.value[uuid]
   selectedInjectFlow.value = injectFlowByUUID.value[uuid]
   selectedInjectFlowUUID.value = uuid
@@ -224,17 +251,43 @@ function selectInject(uuid) {
 function resetState() {
   revertInjectChanges()
   selectedInject.value = null
+  selectedInjectFlow.value = null
+  selectedInjectFlowUUID.value = null
 }
 
 function revertInjectChanges() {
   injectByUUID.value[selectedInjectFlowUUID.value] = originalInject
+  injectFlowByUUID.value[selectedInjectFlowUUID.value] = originalInjectFlow
 }
 
 function cancel() {
   router.push({ name: 'Scenario Overview', params: { uuid: props.uuid }, props: true })
 }
 
-async function saveScenario() {}
+async function saveChanges() {
+  const injectTosave = JSON.parse(JSON.stringify(selectedInject.value))
+  injectTosave.inject_evaluation.forEach((i_eval, i) => {
+    if (typeof injectTosave.inject_evaluation[i].evaluation_context === 'string') {
+      injectTosave.inject_evaluation[i].evaluation_context = JSON.parse(i_eval.evaluation_context)
+    }
+    if (typeof injectTosave.inject_evaluation[i].parameters === 'string') {
+      injectTosave.inject_evaluation[i].parameters = JSON.parse(i_eval.parameters)
+    }
+  })
+
+  const injectFlowToSave = JSON.parse(JSON.stringify(selectedInjectFlow.value))
+  // const injectFlowToSave = {
+  //   inject_uuid: injectTosave.uuid,
+  //   description: injectTosave.description,
+  //   requirements: {},
+  //   sequence: {
+  //     trigger: 'trigger'
+  //   }
+  // }
+
+  const result = await saveInject(props.uuid, injectTosave, injectFlowToSave)
+  ajaxFeedback(result)
+}
 
 function createNewInject() {
   const uuid = uuidv4()
@@ -258,7 +311,7 @@ function createNewInjectEval() {}
       </button>
       <button
         :class="`btn btn-success select-none ${canBeSaved ? 'highlight' : ''}`"
-        @click="saveScenario()"
+        @click="saveChanges()"
         :disabled="!canBeSaved"
       >
         <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Changes
@@ -270,13 +323,13 @@ function createNewInjectEval() {}
         <h2 class="text-2xl">Injects</h2>
         <div class="pl-2 flex flex-col gap-1 py-2">
           <Alert
-            v-if="inject_flows.length == 0"
+            v-if="inject_flow.length == 0"
             variant="warning"
             title="No inject available"
             message="Create an inject to get started."
           ></Alert>
           <div
-            v-for="injectF in inject_flows"
+            v-for="injectF in inject_flow"
             :key="injectF.inject_uuid"
             :class="`
               flex flex-col gap-1 py-1 px-2 rounded select-none cursor-pointer
@@ -321,9 +374,18 @@ function createNewInjectEval() {}
                   Trigger
                 </div>
                 <span class="bg-slate-50 p-0.5 mt-0.5 rounded">
-                  <span v-if="injectF.sequence.trigger.length > 0">{{
-                    injectF.sequence.trigger.join(', ')
-                  }}</span>
+                  <span
+                    v-if="
+                      injectFlowByUUID[injectF.inject_uuid].sequence.trigger.filter(
+                        (t) => t != '- No trigger -'
+                      ).length > 0
+                    "
+                    >{{
+                      injectFlowByUUID[injectF.inject_uuid].sequence.trigger
+                        .filter((t) => t != '- No trigger -')
+                        .join(', ')
+                    }}</span
+                  >
                   <span v-else class="text-nowrap font-light text-xs text-gray-500"
                     >- No trigger -</span
                   >
@@ -363,149 +425,181 @@ function createNewInjectEval() {}
       <div class="basis-3/5">
         <h2 class="text-2xl mb-2">Design Inject</h2>
         <Alert v-show="!selectedInject" variant="info" :title="'Select an inject to edit'"></Alert>
-        <div v-if="selectedInject">
-          <form class="mb-3">
-            <div class="flex flex-col gap-6">
-              <div class="flex flex-row gap-6">
-                <div class="basis-1/4">
-                  <label for="name" class="block text-gray-700 font-bold mb-2">Inject Name</label>
-                  <input
-                    type="text"
-                    v-model="selectedInject.name"
-                    class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
-                    id="name"
-                    placeholder="A name"
-                  />
+        <transition name="slide-fade" mode="out-in">
+          <div v-if="selectedInject">
+            <form class="mb-3">
+              <div class="flex flex-col gap-3">
+                <div class="flex flex-row gap-6">
+                  <div class="basis-1/4">
+                    <label for="name" class="block text-gray-700 font-bold mb-1">Inject Name</label>
+                    <input
+                      type="text"
+                      v-model="selectedInject.name"
+                      class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                      id="name"
+                      placeholder="A name"
+                    />
+                  </div>
+
+                  <div class="flex-grow">
+                    <label for="description" class="block text-gray-700 font-bold mb-1"
+                      >Inject Description</label
+                    >
+                    <input
+                      type="text"
+                      v-model="selectedInject.description"
+                      class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                      id="description"
+                      placeholder="A description"
+                    />
+                  </div>
+                  <div class="">
+                    <label for="target_tool" class="block text-gray-700 font-bold mb-1">
+                      <FontAwesomeIcon :icon="faScrewdriverWrench" class="fa-fw"></FontAwesomeIcon>
+                      Target Tool
+                    </label>
+                    <select
+                      v-model="selectedInject.target_tool"
+                      class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                      id="target_tool"
+                      placeholder="MISP"
+                    >
+                      <option
+                        v-for="(tool_info, tool) in ALLOWED_TARGET_TOOLS"
+                        :key="tool"
+                        :value="tool"
+                        :title="tool_info"
+                      >
+                        {{ tool }}
+                      </option>
+                    </select>
+                  </div>
                 </div>
 
-                <div class="flex-grow">
-                  <label for="description" class="block text-gray-700 font-bold mb-2"
-                    >Inject Description</label
-                  >
-                  <input
-                    type="text"
-                    v-model="selectedInject.description"
-                    class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                    id="description"
-                    placeholder="A description"
-                  />
-                </div>
-                <div class="">
-                  <label for="target_tool" class="block text-gray-700 font-bold mb-2">
-                    <FontAwesomeIcon :icon="faScrewdriverWrench" class="fa-fw"></FontAwesomeIcon>
-                    Target Tool
-                  </label>
-                  <select
-                    v-model="selectedInject.target_tool"
-                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
-                    id="target_tool"
-                    placeholder="MISP"
-                  >
-                    <option value="MISP">MISP</option>
-                  </select>
+                <div class="flex flex-row gap-6">
+                  <div class="basis-1/4">
+                    <label for="name" class="block text-gray-700 font-bold mb-1">Triggers</label>
+                    <select
+                      v-model="selectedInjectFlow.sequence.trigger"
+                      class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                      id="target_tool"
+                      placeholder="MISP"
+                      multiple
+                    >
+                      <option value="null">- No trigger -</option>
+                      <option
+                        v-for="(trigger_info, trigger) in ALLOWED_TRIGGERS"
+                        :key="trigger"
+                        :value="trigger"
+                        :title="trigger_info"
+                      >
+                        {{ trigger }}
+                      </option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
 
-          <div>
-            <h2 class="text-xl mb-2">Inject Evaluation</h2>
             <div>
-              <div
-                v-for="(inject_eval, i) in selectedInject?.inject_evaluation"
-                :key="i"
-                class="flex flex-col gap-1 py-1 px-2 border border-slate-400 rounded bg-slate-200 mb-5"
-              >
-                <div class="relative">
-                  <span
-                    class="font-semibold absolute px-1 -top-1 -left-2 bg-slate-300 border-slate-400 text-slate-700 rounded-br rounded-tl border-b border-r"
-                  >
-                    Inject {{ i + 1 }}
-                  </span>
-                  <div class="flex gap-3 mt-5">
-                    <div class="basis-1/3">
-                      <div>
-                        <div class="font-semibold pt-1 text-nowrap">Evaluation Strategy</div>
-                        <div class="min-w-60">
-                          <select
-                            v-model="selectedInject.inject_evaluation[i].evaluation_strategy"
-                            class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
-                            placeholder="Evaluation Strategy"
-                          >
-                            <option
-                              v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES"
-                              :key="strategy"
-                              :value="strategy"
-                              :title="strategy_info"
+              <h2 class="text-xl mb-2">Inject Evaluation</h2>
+              <div>
+                <div
+                  v-for="(inject_eval, i) in selectedInject?.inject_evaluation"
+                  :key="i"
+                  class="flex flex-col gap-1 py-1 px-2 border border-slate-400 rounded bg-slate-200 mb-5"
+                >
+                  <div class="relative">
+                    <span
+                      class="font-semibold absolute px-1 -top-1 -left-2 bg-slate-300 border-slate-400 text-slate-700 rounded-br rounded-tl border-b border-r"
+                    >
+                      Inject {{ i + 1 }}
+                    </span>
+                    <div class="flex gap-3 mt-5">
+                      <div class="basis-1/3">
+                        <div>
+                          <div class="font-semibold pt-1 text-nowrap">Evaluation Strategy</div>
+                          <div class="min-w-60">
+                            <select
+                              v-model="selectedInject.inject_evaluation[i].evaluation_strategy"
+                              class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400"
+                              placeholder="Evaluation Strategy"
                             >
-                              {{ strategy }}
-                            </option>
-                          </select>
+                              <option
+                                v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES"
+                                :key="strategy"
+                                :value="strategy"
+                                :title="strategy_info"
+                              >
+                                {{ strategy }}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-semibold pt-2">Max Score</div>
+                          <div class="min-w-60">
+                            <input
+                              type="number"
+                              min="0"
+                              v-model="selectedInject.inject_evaluation[i].score_range[1]"
+                              class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                              placeholder="20"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-semibold pt-2">Result</div>
+                          <div class="min-w-60">
+                            <input
+                              type="text"
+                              v-model="selectedInject.inject_evaluation[i].result"
+                              class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                              placeholder="Data created"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <div class="font-semibold pt-2">Max Score</div>
+                      <div class="basis-2/3 -mt-5">
+                        <div class="font-semibold">Evaluation Context</div>
                         <div class="min-w-60">
-                          <input
-                            type="number"
-                            min="0"
-                            v-model="selectedInject.inject_evaluation[i].score_range[1]"
-                            class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                            placeholder="20"
+                          <JsonEditorVue
+                            v-if="showEditor"
+                            v-model="selectedInject.inject_evaluation[i].evaluation_context"
+                            :mode="Mode.text"
+                            :mainMenuBar="false"
+                            :navigationBar="false"
+                            :statusBar="false"
+                            :indentation="2"
+                            class="shadow-lg border w-full"
                           />
                         </div>
-                      </div>
-                      <div>
-                        <div class="font-semibold pt-2">Result</div>
-                        <div class="min-w-60">
-                          <input
-                            type="text"
-                            v-model="selectedInject.inject_evaluation[i].result"
-                            class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                            placeholder="Data created"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div class="basis-2/3 -mt-5">
-                      <div class="font-semibold">Evaluation Context</div>
-                      <div class="min-w-60">
-                        <JsonEditorVue
-                          v-if="showEditor"
-                          v-model="selectedInject.inject_evaluation[i].evaluation_context"
-                          :mode="Mode.text"
-                          :mainMenuBar="false"
-                          :navigationBar="false"
-                          :statusBar="false"
-                          :indentation="2"
-                          class="shadow-lg border w-full"
-                        />
                       </div>
                     </div>
                   </div>
+                  <div>
+                    <h3 class="text-lg my-2">Evaluation Parameters</h3>
+                    <JsonEditorVue
+                      v-if="showEditor"
+                      v-model="selectedInject.inject_evaluation[i].parameters"
+                      :mode="Mode.text"
+                      :mainMenuBar="false"
+                      :indentation="4"
+                      class="shadow-lg border w-full"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <h3 class="text-lg my-2">Evaluation Parameters</h3>
-                  <JsonEditorVue
-                    v-if="showEditor"
-                    v-model="selectedInject.inject_evaluation[i].parameters"
-                    :mode="Mode.text"
-                    :mainMenuBar="false"
-                    :indentation="4"
-                    class="shadow-lg border w-full"
-                  />
-                </div>
-              </div>
 
-              <div class="flex justify-end">
-                <button class="btn btn-success select-none" @click="createNewInjectEval()">
-                  <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>Create New
-                  Evaluation
-                </button>
+                <div class="flex justify-end">
+                  <button class="btn btn-success select-none" @click="createNewInjectEval()">
+                    <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>Create New
+                    Evaluation
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
       </div>
     </div>
   </div>

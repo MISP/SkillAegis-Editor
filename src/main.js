@@ -69,7 +69,7 @@ export function removeToast(id) {
 export function ajaxFeedback(response) {
     toast({
         variant: response.success ? 'success' : 'danger',
-        message: response.message,
+        message: String(response.message),
         title: response.title,
     })
 }

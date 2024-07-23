@@ -9,7 +9,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   title: String,
-  message: String,
+  message: [Array, String],
   variant: {
     type: String,
     validator(value, props) {
@@ -40,6 +40,14 @@ const variantClass = computed(() => {
   }
   return 'blue'
 })
+
+const messages = computed(() => {
+  return Array.isArray(props.message)
+    ? props.message
+    : props.message !== undefined
+    ? [props.message]
+    : []
+})
 </script>
 
 <template>
@@ -51,8 +59,8 @@ const variantClass = computed(() => {
       :class="`text-${variantClass}-700 text-lg mx-3`"
     ></FontAwesomeIcon>
     <strong class="mr-2">{{ props.title }}</strong>
-    <p class="text-slate-700 p-1 font-light" v-if="props.message && props.message.length > 0">
-      {{ props.message }}
-    </p>
+    <pre class="text-slate-700 p-1 font-light" v-for="(message, i) in messages" :key="i">
+      {{ message }}
+    </pre>
   </div>
 </template>

@@ -9,6 +9,7 @@ const endpoints = {
     'scenarios-add': '/scenarios/add',
     'scenarios-edit': '/scenarios/edit',
     'scenarios-delete': '/scenarios/delete',
+    'inject-save': '/scenarios/save-inject',
 }
 
 async function get(url) {
@@ -74,4 +75,13 @@ export async function deleteScenario(uuid) {
         store.scenarios = store.scenarios.filter((s) => s.exercise.uuid != uuid)
     }
     return data
+}
+
+export async function saveInject(scenario_uuid, inject, injectFlow) {
+    const url = endpoints['inject-save'] + `/${scenario_uuid}`
+    const payload = {
+        inject: inject,
+        injectFlow: injectFlow,
+    }
+    return await post(url, payload)
 }

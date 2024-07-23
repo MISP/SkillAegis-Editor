@@ -3,6 +3,7 @@ import { selectedScenario, selectedScenarioUUID } from '@/store.js'
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import Toaster from '@/components/Toaster.vue'
 import Navbar from '@/components/Navbar.vue'
+import SafeComponent from '@/components/SafeComponent.vue'
 </script>
 
 <template>
@@ -29,9 +30,7 @@ import Navbar from '@/components/Navbar.vue'
       >
         <router-view v-slot="{ Component }">
           <transition name="slide-fade" mode="out-in">
-            <keep-alive>
-              <component :is="Component" />
-            </keep-alive>
+            <SafeComponent :tobe="Component" />
           </transition>
         </router-view>
       </div>
