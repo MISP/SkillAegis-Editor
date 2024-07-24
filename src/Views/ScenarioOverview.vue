@@ -311,7 +311,7 @@ function initForm() {
           </div>
 
           <div class="flex gap-6">
-            <div class="basis-1/2">
+            <div class="">
               <RequirementTree></RequirementTree>
             </div>
           </div>

@@ -38,7 +38,11 @@ const dependencies = computed(() => {
     requirements[injF.inject_uuid] = []
   })
   inject_flow.value.forEach((injF) => {
-    if (injF.requirements.inject_uuid !== undefined && injF.requirements.inject_uuid.length > 0) {
+    if (
+      injF.requirements.inject_uuid !== undefined &&
+      injF.requirements.inject_uuid !== null &&
+      injF.requirements.inject_uuid.length > 0
+    ) {
       requirements[injF.requirements.inject_uuid].push(injF.inject_uuid)
     }
   })
@@ -67,15 +71,18 @@ const hoveredInjectUUID = ref(null)
                 <a
                   @mouseover="hoveredInjectUUID = injF.inject_uuid"
                   @mouseleave="hoveredInjectUUID = null"
-                  :class="`select-none px-1 py-0.5 border border-slate-300 rounded ${
+                  :class="`text-nowrap select-none px-1 py-0.5 border border-slate-300 rounded ${
                     hoveredInjectUUID == injF.inject_uuid ? 'highlighted-inject' : ''
                   }`"
                   >{{ injectByUUID[injF.inject_uuid].name }}</a
                 >
               </td>
-              <td>
+              <td class="py-1 px-2">
                 <span
-                  v-if="injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid === undefined"
+                  v-if="
+                    injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid === undefined ||
+                    injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid === null
+                  "
                   class="text-slate-500 text-sm"
                   >- no requirements -</span
                 >
@@ -86,7 +93,7 @@ const hoveredInjectUUID = ref(null)
                         injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid
                     "
                     @mouseleave="hoveredInjectUUID = null"
-                    :class="`select-none px-1 py-0.5 border border-slate-300 rounded ${
+                    :class="`text-nowrap select-none px-1 py-0.5 border border-slate-300 rounded ${
                       hoveredInjectUUID ==
                       injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid
                         ? 'highlighted-inject'
@@ -99,7 +106,7 @@ const hoveredInjectUUID = ref(null)
                   >
                 </div>
               </td>
-              <td>
+              <td class="py-1 px-2">
                 <span
                   v-if="dependencies[injF.inject_uuid].length == 0"
                   class="text-slate-500 text-sm"
@@ -110,7 +117,7 @@ const hoveredInjectUUID = ref(null)
                     <a
                       @mouseover="hoveredInjectUUID = uuid"
                       @mouseleave="hoveredInjectUUID = null"
-                      :class="`select-none px-1 py-0.5 border border-slate-300 rounded ${
+                      :class="`text-nowrap select-none px-1 py-0.5 border border-slate-300 rounded ${
                         hoveredInjectUUID == uuid ? 'highlighted-inject' : ''
                       }`"
                       >{{ injectByUUID[uuid].name }}</a
@@ -128,6 +135,6 @@ const hoveredInjectUUID = ref(null)
 
 <style>
 .highlighted-inject {
-  @apply bg-blue-200 border-blue-500;
+  @apply bg-blue-100 border-blue-600;
 }
 </style>

@@ -99,7 +99,7 @@ def createScenario(newExercise) -> Union[dict, str]:
     filename = f"{filename}.json"
     try:
         with open(EXERCISE_DIR / filename, 'w') as f:
-            json.dump(scenario, f)
+            json.dump(scenario, f, indent=4)
     except Exception as e:
         print(e)
         return e
@@ -126,7 +126,7 @@ def editScenario(updatedScenario) -> Union[dict, str]:
     filename = scenarioFilenameByUUID[theUUID]
     try:
         with open(EXERCISE_DIR / filename, 'w') as f:
-            json.dump(scenario, f)
+            json.dump(scenario, f, indent=4)
     except Exception as e:
         print(e)
         return e
@@ -186,7 +186,7 @@ def saveScenario(scenario_uuid: str, scenario: dict) -> Union[bool, str]:
     filename = scenarioFilenameByUUID[scenario_uuid]
     try:
         with open(EXERCISE_DIR / filename, 'w') as f:
-            json.dump(scenario, f)
+            json.dump(scenario, f, indent=4)
     except Exception as e:
         print(e)
         return e
