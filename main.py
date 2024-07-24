@@ -212,6 +212,28 @@ def removeInject(scenario_uuid: str, inject_uuid: str) -> Union[bool, str]:
     return saveResult
 
 
+def orderInjects(scenario_uuid, inject_uuids) -> Union[bool, str]:
+    global scenarios, scenarioByUUID
+
+    if scenario_uuid not in scenarioByUUID:
+        return 'Invalid scenario'
+    scenario = scenarioByUUID[scenario_uuid]
+
+    orderedInjects = []
+    orderedInjectFlows = []
+    for inject_uuid in inject_uuids:
+        inject = [i for i in scenario['injects'] if i['uuid'] == inject_uuid][0]
+        injectFlow = [i for i in scenario['inject_flow'] if i['inject_uuid'] == inject_uuid][0]
+        orderedInjects.append(inject)
+        orderedInjectFlows.append(injectFlow)
+    
+    scenario['injects'] = orderedInjects
+    scenario['inject_flow'] = orderedInjectFlows
+
+    saveResult = saveScenario(scenario_uuid, scenario)
+    return saveResult
+
+
 class Exercise(BaseModel):
     name: str
     namespace: str
@@ -235,6 +257,10 @@ class InjectFlow(BaseModel):
     description: str | None = None
     requirements: dict | None = None
     sequence: dict | None = None
+
+
+class InjectOrder(BaseModel):
+    inject_uuids: list
 
 
 @app.get("/")
@@ -301,11 +327,18 @@ def save_inject(scenario_uuid: str, inject: Inject, injectFlow: InjectFlow):
     return error('Could not save inject', result)
 
 
-
 @app.post("/scenarios/delete-inject/{scenario_uuid}/{inject_uuid}")
 def save_inject(scenario_uuid: str, inject_uuid: str):
     result = removeInject(scenario_uuid, inject_uuid)
     if result is True:
         return success(f"Inject removed")
     return error('Could not remove inject', result)
+
+
+@app.post("/scenarios/order-inject/{scenario_uuid}")
+def save_inject(scenario_uuid: str, injectOrder: InjectOrder):
+    result = orderInjects(scenario_uuid, injectOrder.inject_uuids)
+    if result is True:
+        return success(f"Injects reordered")
+    return error('Could not reorder injects', result)
 

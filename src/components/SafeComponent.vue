@@ -32,7 +32,11 @@ watch(
     :message="renderingError"
     variant="danger"
   ></Alert>
-  <keep-alive v-else>
+  <keep-alive
+    v-else
+    exclude="ScenarioDesigner"
+    debug="For some reasons ScenarioDesigner doesn't behave correctly if not unmounted. Exluding it for now"
+  >
     <component :is="props.tobe" />
   </keep-alive>
 </template>

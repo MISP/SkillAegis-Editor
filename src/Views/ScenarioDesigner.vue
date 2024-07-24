@@ -10,9 +10,12 @@ import {
 } from '@/store.js'
 import { Mode } from 'vanilla-jsoneditor'
 import {
+  faArrowDownWideShort,
+  faArrowUpWideShort,
   faCirclePlay,
   faEdit,
   faFingerprint,
+  faGripVertical,
   faInfoCircle,
   faListCheck,
   faMinus,
@@ -22,9 +25,18 @@ import {
   faTimes,
   faTrash
 } from '@fortawesome/free-solid-svg-icons'
-import { ref, computed, onMounted, onBeforeUnmount, watch, onActivated, onDeactivated } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  onActivated,
+  onDeactivated,
+  nextTick
+} from 'vue'
 import JsonEditorVue from 'json-editor-vue'
-import { saveInject, removeInject } from '@/api'
+import { saveInject, removeInject, saveInjectOrder } from '@/api'
 import { ajaxFeedback } from '@/main'
 
 const props = defineProps({
@@ -47,14 +59,15 @@ const route = useRoute()
 const router = useRouter()
 
 /* Have to cheat there to avoid having the editor unmount itself before the animation finishes and avoid gutter bug where editor is not displayed correctly */
-onActivated(() => {
-  showEditor.value = true
-})
-onDeactivated(() => {
-  setTimeout(() => {
-    showEditor.value = false
-  }, 250)
-})
+// onActivated(() => {
+//   showEditor.value = true
+// })
+// onDeactivated(() => {
+//   setTimeout(() => {
+//     showEditor.value = false
+//   }, 250)
+//   resetState()
+// })
 
 onBeforeUnmount(() => {
   resetState()
@@ -78,7 +91,7 @@ onBeforeRouteLeave(async (to, from) => {
   resetState()
 })
 
-const showEditor = ref(false)
+const showEditor = ref(true)
 const canBeSaved = computed(() => {
   return hasValidChanges.value
 })
@@ -99,6 +112,10 @@ const getFormErrors = computed(() => {
     errors.push('selectedInject.name')
   }
   return errors
+})
+
+const injectMovedPosition = computed(() => {
+  return injectOrderOperations.value.length > 0
 })
 
 const hasValidChanges = computed(() => {
@@ -210,11 +227,14 @@ const hasValidChanges = computed(() => {
 })
 
 const selectedScenario = computed(() => {
-  return JSON.parse(JSON.stringify(originalSelectedScenario.value))
+  return originalSelectedScenario.value !== null
+    ? JSON.parse(JSON.stringify(originalSelectedScenario.value))
+    : null
 })
 
 let originalInject = {}
 let originalInjectFlow = {}
+let injectOrderOperations = ref([])
 const selectedInject = ref(null)
 const selectedInjectFlow = ref(null)
 const selectedInjectFlowUUID = ref(null)
@@ -230,7 +250,9 @@ const emptyInject = {
 const emptyInjectFlow = {
   inject_uuid: '',
   description: '',
-  requirements: {},
+  requirements: {
+    inject_uuid: null
+  },
   sequence: {
     followed_by: [],
     trigger: []
@@ -268,6 +290,17 @@ const inject_flow = computed(() => {
   return selectedScenario.value?.inject_flow || []
 })
 
+async function onDragEnd(event) {
+  moveInject(event.oldIndex, event.newIndex)
+  injectOrderOperations.value.push([event.oldIndex, event.newIndex])
+}
+
+async function moveInject(from, to) {
+  const item = selectedScenario.value.inject_flow.splice(from, 1)[0]
+  await nextTick()
+  selectedScenario.value.inject_flow.splice(to, 0, item)
+}
+
 function selectInject(uuid) {
   if (selectedInjectFlowUUID.value) {
     revertInjectChanges()
@@ -281,21 +314,47 @@ function selectInject(uuid) {
 
 function resetState() {
   revertInjectChanges()
+  revertInjectOrderChanges()
   selectedInject.value = null
   selectedInjectFlow.value = null
   selectedInjectFlowUUID.value = null
 }
 
 function revertInjectChanges() {
-  injectByUUID.value[selectedInjectFlowUUID.value] = originalInject
-  injectFlowByUUID.value[selectedInjectFlowUUID.value] = originalInjectFlow
+  if (Object.keys(originalInject).length > 0) {
+    injectByUUID.value[selectedInjectFlowUUID.value] = originalInject
+    injectFlowByUUID.value[selectedInjectFlowUUID.value] = originalInjectFlow
+  }
+}
+
+async function saveInjectOrderChanges() {
+  const injectOrder = inject_flow.value.map((i) => i.inject_uuid)
+  const result = await saveInjectOrder(props.uuid, injectOrder)
+  ajaxFeedback(result)
+  if (result.success) {
+    injectOrderOperations.value = []
+  }
 }
 
 function cancel() {
   router.push({ name: 'Scenario Overview', params: { uuid: props.uuid }, props: true })
 }
 
-async function saveChanges() {
+const sortable = ref()
+
+async function revertInjectOrderChanges() {
+  if (sortable.value.sortable) {
+    var order = sortable.value.sortable.toArray()
+    injectOrderOperations.value.reverse().forEach(([from, to]) => {
+      const item = order.splice(to, 1)[0]
+      order.splice(from, 0, item)
+    })
+    sortable.value.sortable.sort(order, true)
+    injectOrderOperations.value = []
+  }
+}
+
+async function saveInjectChanges() {
   const injectTosave = JSON.parse(JSON.stringify(selectedInject.value))
   injectTosave.inject_evaluation.forEach((i_eval, i) => {
     if (typeof injectTosave.inject_evaluation[i].evaluation_context === 'string') {
@@ -358,22 +417,43 @@ function deleteEvaluation(evaluationIndex) {
 
 <template>
   <div>
-    <div class="flex justify-end my-2 gap-2">
+    <div class="flex justify-end gap-2">
       <button class="btn btn-danger select-none" @click="cancel()">
         <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>Cancel Changes
       </button>
       <button
         :class="`btn btn-success select-none ${canBeSaved ? 'highlight-success' : ''}`"
-        @click="saveChanges()"
+        @click="saveInjectChanges()"
         :disabled="!canBeSaved"
       >
-        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Changes
+        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Inject Changes
       </button>
     </div>
 
     <div class="flex flex-row gap-8">
       <div class="basis-2/5">
-        <h2 class="text-2xl">Injects</h2>
+        <div class="flex gap-2">
+          <h2 class="text-2xl">Injects</h2>
+          <div class="ml-auto flex gap-2">
+            <button
+              class="btn btn-danger select-none"
+              :disabled="!injectMovedPosition"
+              @click="revertInjectOrderChanges()"
+            >
+              <FontAwesomeIcon :icon="faArrowUpWideShort" class="fa-fw"></FontAwesomeIcon>Rest Order
+            </button>
+            <button
+              :class="`btn btn-success select-none ${
+                injectMovedPosition ? 'highlight-success' : ''
+              }`"
+              @click="saveInjectOrderChanges()"
+              :disabled="!injectMovedPosition"
+            >
+              <FontAwesomeIcon :icon="faArrowDownWideShort" class="fa-fw"></FontAwesomeIcon>Save
+              Inject Order
+            </button>
+          </div>
+        </div>
         <div class="pl-2 flex flex-col gap-1 py-2">
           <Alert
             v-if="inject_flow.length == 0"
@@ -382,6 +462,7 @@ function deleteEvaluation(evaluationIndex) {
             message="Create an inject to get started."
           ></Alert>
           <Sortable
+            ref="sortable"
             :list="inject_flow"
             item-key="inject_uuid"
             tag="div"
@@ -389,8 +470,11 @@ function deleteEvaluation(evaluationIndex) {
               animation: 170,
               ghostClass: 'ghost',
               dragClass: 'drag',
+              handle: '.drag-handle',
+              // filter: '.unsaved-inject',
               forceFallback: true
             }"
+            @end="onDragEnd"
             class="flex flex-col gap-1"
           >
             <template #item="{ element }">
@@ -406,7 +490,11 @@ function deleteEvaluation(evaluationIndex) {
                   `"
               >
                 <div class="flex flex-row gap-2 items-center">
-                  <span class="font-semibold">
+                  <FontAwesomeIcon
+                    :icon="faGripVertical"
+                    class="fa-fw drag-handle absolute text-lg cursor-grab"
+                  ></FontAwesomeIcon>
+                  <span class="font-semibold ml-7">
                     {{ injectByUUID[element.inject_uuid].name }}
                   </span>
                   <FontAwesomeIcon :icon="faMinus" class="fa-fw"></FontAwesomeIcon>
@@ -582,12 +670,12 @@ function deleteEvaluation(evaluationIndex) {
                     class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
                     id="requirement"
                   >
-                    <option :value="undefined">- No requirements -</option>
+                    <option :value="null">- No requirements -</option>
                     <option
-                      v-for="(inject, uuid) in injectByUUID"
-                      :key="uuid"
+                      v-for="inject in injectByUUID"
+                      :key="inject.uuid"
                       :value="inject.uuid"
-                      :title="uuid"
+                      :title="inject.uuid"
                     >
                       {{ inject.name }}
                     </option>

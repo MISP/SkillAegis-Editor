@@ -21,7 +21,7 @@ export const selectedScenario = computed(() => {
 export const selectedScenarioUUID = computed(() => {
     return store.selected_scenario || null
 })
-export function hasScenario(uuid) {
+export function hasScenario() {
     return scenarioByUUID.value[store.selected_scenario] !== undefined
 }
 export function hasScenarios() {
