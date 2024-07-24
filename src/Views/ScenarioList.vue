@@ -11,7 +11,8 @@ import {
   faEdit,
   faTrash,
   faPlus,
-  faArrowsRotate
+  faArrowsRotate,
+  faEye
 } from '@fortawesome/free-solid-svg-icons'
 
 const route = useRoute()
@@ -19,6 +20,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const scenarios = computed(() => store.scenarios)
+const read_errors = computed(() => store.read_errors)
 const error = ref(null)
 
 // watch the params of the route to fetch the data again
@@ -81,6 +83,17 @@ async function deleteScenario(uuid) {
   ajaxFeedback(result)
   fetchScenarios()
 }
+
+const showModal = ref(false)
+const selectedFilename = ref('')
+const selectedFileError = ref('')
+const selectedFileContent = ref('')
+function viewFile(filename, read_error) {
+  showModal.value = true
+  selectedFilename.value = filename
+  selectedFileError.value = read_error.error
+  selectedFileContent.value = read_error.text
+}
 </script>
 
 <template>
@@ -88,6 +101,43 @@ async function deleteScenario(uuid) {
     <div v-if="loading" class="text-center pt-4">
       <FontAwesomeIcon :icon="faSpinner" class="text-4xl fa-spin"></FontAwesomeIcon>
     </div>
+
+    <Teleport to="body">
+      <Transition>
+        <div
+          v-if="showModal"
+          class="fixed w-4/6 top-20 left-2/4 -translate-x-1/2 rounded-lg border border-slate-800 shadow-lg z-50"
+        >
+          <Teleport to="body">
+            <div
+              @click="showModal = false"
+              class="bg-white/30 backdrop-blur-sm fixed top-0 bottom-0 left-0 right-0 z-40 cursor-pointer"
+            ></div>
+          </Teleport>
+          <div class="px-4 py-3 bg-slate-700 rounded-t-lg border-b border-slate-800">
+            <h2 class="text-white font-semibold text-lg">
+              Content of file <code>{{ selectedFilename }}</code>
+            </h2>
+          </div>
+          <div class="px-4 py-3 bg-slate-100">
+            <div>
+              <strong>Error:</strong>
+              <span class="ml-2 font-mono">{{ selectedFileError }}</span>
+            </div>
+            <div
+              class="mt-2 border border-slate-900 bg-white p-2 overflow-auto max-h-[calc(100vh-24rem)]"
+            >
+              <pre class="text-sm">{{ selectedFileContent }}</pre>
+            </div>
+          </div>
+          <div class="px-4 py-3 bg-slate-100 rounded-b-lg">
+            <div class="flex flex-row-reverse">
+              <button class="btn btn-info" @click="showModal = false">Ok</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <Alert
       v-if="error"
@@ -97,15 +147,18 @@ async function deleteScenario(uuid) {
     ></Alert>
 
     <div v-if="scenarios.length > 0">
-      <div class="mb-2 flex flex-row-reverse gap-2">
-        <button class="btn btn-success" @click="createScenario()">
-          <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>
-          Create Scenario
-        </button>
-        <button class="btn" @click="reload()">
-          <FontAwesomeIcon :icon="faArrowsRotate" class="fa-fw"></FontAwesomeIcon>
-          Reload Scenarios
-        </button>
+      <div class="flex">
+        <h2 class="text-lg text-slate-700 mb-1">Available Scenarios</h2>
+        <div class="ml-auto mb-2 inline-flex flex-row-reverse gap-2">
+          <button class="btn btn-success" @click="createScenario()">
+            <FontAwesomeIcon :icon="faPlus" class="fa-fw"></FontAwesomeIcon>
+            Create Scenario
+          </button>
+          <button class="btn" @click="reload()">
+            <FontAwesomeIcon :icon="faArrowsRotate" class="fa-fw"></FontAwesomeIcon>
+            Reload Scenarios
+          </button>
+        </div>
       </div>
 
       <table
@@ -133,7 +186,7 @@ async function deleteScenario(uuid) {
             class="hover:bg-slate-100"
           >
             <td
-              class="rounded-bl-lg border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 p-1 font-mono text-sm"
+              class="rounded-bl-lg border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-2 py-1 font-mono text-sm"
             >
               {{ scenario.exercise.namespace }}
             </td>
@@ -193,8 +246,51 @@ async function deleteScenario(uuid) {
         </tbody>
       </table>
     </div>
+
+    <div class="mt-5 mb-1" v-if="Object.keys(read_errors).length > 0">
+      <h2 class="text-lg text-slate-700 mb-1">Read Errors</h2>
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full border-separate [&:not(:last-child)]border border-slate-300 border-spacing-0"
+      >
+        <div
+          v-for="(read_error, filename) in read_errors"
+          :key="filename"
+          class="px-3 py-2 flex border-b border-slate-100"
+        >
+          <span class="font-mono font-semibold flex items-center">{{ filename }}</span>
+          <span class="font-mono text-sm flex items-center ml-5">{{ read_error.error }}</span>
+          <span class="ml-auto">
+            <div class="flex gap-1">
+              <button class="btn" @click="viewFile(filename, read_error)">
+                <FontAwesomeIcon :icon="faEye" class="fa-fw"></FontAwesomeIcon>
+              </button>
+            </div>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style>
+.v-enter-active {
+  @apply transition-all;
+  @apply duration-200;
+}
+.v-leave-active {
+  @apply transition-all;
+  @apply duration-200;
+}
+.v-enter-from {
+  opacity: 0;
+  @apply opacity-0;
+  @apply -translate-y-12;
+  @apply -translate-x-1/2;
+}
+.v-leave-to {
+  opacity: 0;
+  @apply opacity-0;
+  @apply -translate-y-12;
+  @apply -translate-x-1/2;
+}
 </style>

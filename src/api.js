@@ -56,6 +56,7 @@ async function post(url, payload) {
 export async function fetchScenarios() {
     const data = await get(endpoints['scenarios-index'])
     store.scenarios = data.scenarios
+    store.read_errors = data.read_errors
 }
 
 export async function fetchScenario() {
@@ -65,6 +66,7 @@ export async function fetchScenario() {
 export async function forceReload() {
     const data = await post(endpoints['scenarios-reload'])
     store.scenarios = data.scenarios
+    store.read_errors = data.read_errors
 }
 
 export async function addScenario(payload) {

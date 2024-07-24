@@ -28,11 +28,13 @@ app.add_middleware(
 scenarios = []
 scenarioByUUID = {}
 scenarioFilenameByUUID = {}
+readErrors = {}
 
 
 def read_exercise_dir():
-    global scenarioFilenameByUUID
+    global scenarioFilenameByUUID, readErrors
     scenarioFilenameByUUID = {}
+    readErrors = {}
 
     target_dir = EXERCISE_DIR
     json_files = target_dir.glob("*.json")
@@ -45,7 +47,15 @@ def read_exercise_dir():
                 uuid = parsed_exercise['exercise']['uuid']
                 scenarioFilenameByUUID[uuid] = json_file
             except json.JSONDecodeError as e:
-                print(e)
+                relative_file = str(json_file.relative_to(EXERCISE_DIR))
+                errorStr = f"json.JSONDecodeError: {e.msg}"
+                f.seek(0)
+                text = f.read()
+                readErrors[relative_file] = {
+                    'error': errorStr,
+                    'text': text,
+                }
+                print(relative_file + ' - ' + errorStr)
     return exercises
 
 
@@ -270,20 +280,22 @@ def read_root():
 
 @app.get("/scenarios/index")
 def scenarios_index():
-    global scenarios
+    global scenarios, scenarioByUUID, readErrors
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
+        'read_errors': readErrors,
     }
 
 
 @app.post("/scenarios/reload")
 def scenarios_reload():
-    global scenarios, scenarioByUUID
+    global scenarios, scenarioByUUID, readErrors
     reloadJsonFiles()
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
+        'read_errors': readErrors,
     }
 
 

@@ -4,6 +4,7 @@ import { computed, reactive } from 'vue'
 export const store = reactive({
     selected_scenario: null,
     scenarios: [],
+    read_errors: [],
 })
 
 export const scenarioByUUID = computed(() => {
