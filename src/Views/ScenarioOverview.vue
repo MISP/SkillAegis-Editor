@@ -7,6 +7,7 @@ import JsonEditorVue from 'json-editor-vue'
 import { Mode } from 'vanilla-jsoneditor'
 import { editScenario, fetchScenarios } from '@/api'
 import { ajaxFeedback } from '@/main'
+import RequirementTree from '@/Views/scenario-overview/RequirementTree.vue'
 
 const props = defineProps({
   uuid: String
@@ -306,6 +307,12 @@ function initForm() {
               <div class="border-slate-200 border p-3 rounded w-full bg-white">
                 <p class="text-slate-600 italic">Feature not supported yet</p>
               </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="basis-1/2">
+              <RequirementTree></RequirementTree>
             </div>
           </div>
         </div>
