@@ -72,6 +72,9 @@ watch(
 )
 
 onBeforeRouteLeave(async (to, from) => {
+  newUnsavedInjects.forEach((inject_uuid) => {
+    removeInjectFromSelectedScenario(inject_uuid)
+  })
   resetState()
 })
 
@@ -94,13 +97,6 @@ const getFormErrors = computed(() => {
     selectedInject.value.name.length < 3
   ) {
     errors.push('selectedInject.name')
-  }
-  if (
-    selectedInject.value.description === undefined ||
-    selectedInject.value.description === null ||
-    selectedInject.value.description.length < 3
-  ) {
-    errors.push('selectedInject.description')
   }
   return errors
 })
@@ -222,6 +218,7 @@ let originalInjectFlow = {}
 const selectedInject = ref(null)
 const selectedInjectFlow = ref(null)
 const selectedInjectFlowUUID = ref(null)
+let newUnsavedInjects = []
 
 const emptyInject = {
   uuid: '',
@@ -313,6 +310,7 @@ async function saveChanges() {
 
   const result = await saveInject(props.uuid, injectTosave, injectFlowToSave)
   if (result.success) {
+    newUnsavedInjects = newUnsavedInjects.filter((e) => e !== injectTosave.uuid)
     updateInjectToSelectedScenario(injectTosave, injectFlowToSave)
     originalInject = JSON.parse(JSON.stringify(injectTosave))
     originalInjectFlow = JSON.parse(JSON.stringify(injectFlowToSave))
@@ -326,19 +324,26 @@ function createNewInject() {
   newInject.uuid = uuid
   const newInjectFlow = JSON.parse(JSON.stringify(emptyInjectFlow))
   newInjectFlow.inject_uuid = uuid
+  newUnsavedInjects.push(uuid)
   addNewInjectToSelectedScenario(newInject, newInjectFlow)
   selectInject(uuid)
 }
 
 async function deleteInject(inject_uuid) {
-  const result = await removeInject(props.uuid, inject_uuid)
+  let result = { success: true }
+  let ajaxDone = false
+  if (!newUnsavedInjects.includes(inject_uuid)) {
+    result = await removeInject(props.uuid, inject_uuid)
+    ajaxDone = true
+  }
   if (result.success) {
+    newUnsavedInjects = newUnsavedInjects.filter((e) => e !== inject_uuid)
     removeInjectFromSelectedScenario(inject_uuid)
     if (selectedInjectFlowUUID.value == inject_uuid) {
       resetState()
     }
   }
-  ajaxFeedback(result)
+  return ajaxDone ? ajaxFeedback(result) : true
 }
 
 function createNewInjectEval() {
@@ -381,7 +386,7 @@ function deleteEvaluation(evaluationIndex) {
             item-key="inject_uuid"
             tag="div"
             :options="{
-              animation: 150,
+              animation: 170,
               ghostClass: 'ghost',
               dragClass: 'drag',
               forceFallback: true
@@ -393,7 +398,6 @@ function deleteEvaluation(evaluationIndex) {
                 @click="selectInject(element.inject_uuid)"
                 :class="`
                     group flex flex-col gap-1 py-1 px-2 rounded select-none cursor-pointer border
-                    hover:-translate-x-1 
                     ${
                       selectedInjectFlowUUID == element.inject_uuid
                         ? 'border-blue-400 bg-blue-100 -translate-x-2'
@@ -415,7 +419,7 @@ function deleteEvaluation(evaluationIndex) {
                   <span class="ml-auto">
                     <button
                       class="hidden group-hover:inline-block btn btn-xs btn-danger select-none !border-slate-400"
-                      @click="deleteInject(element.inject_uuid)"
+                      @click.stop="deleteInject(element.inject_uuid)"
                     >
                       <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
                     </button>
@@ -720,11 +724,12 @@ label {
 }
 
 .ghost {
-  @apply bg-white;
+  @apply bg-slate-300;
   @apply border-dashed;
+  @apply -translate-x-4;
 }
 
 .drag {
-  @apply !opacity-100;
+  @apply !opacity-60;
 }
 </style>
