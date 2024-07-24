@@ -156,7 +156,16 @@ const hasValidChanges = computed(() => {
       ? JSON.stringify(originalSelectedInjectFlow.sequence, undefined, 4)
       : originalSelectedInjectFlow.sequence
 
-  const injectFlowMetaChanges = sequence_str != orig_sequence_str
+  let requirements_str =
+    typeof selectedInjectFlow.value.requirements === 'object'
+      ? JSON.stringify(selectedInjectFlow.value.requirements, undefined, 4)
+      : selectedInjectFlow.value.requirements
+  let orig_requirements_str =
+    typeof originalSelectedInjectFlow.requirements === 'object'
+      ? JSON.stringify(originalSelectedInjectFlow.requirements, undefined, 4)
+      : originalSelectedInjectFlow.requirements
+
+  const injectFlowMetaChanges = requirements_str != orig_requirements_str
 
   if (metaChanges || injectFlowMetaChanges) {
     return true
@@ -341,9 +350,8 @@ function cancel() {
 }
 
 const sortable = ref()
-
 async function revertInjectOrderChanges() {
-  if (sortable.value.sortable) {
+  if (sortable.value?.sortable) {
     var order = sortable.value.sortable.toArray()
     injectOrderOperations.value.reverse().forEach(([from, to]) => {
       const item = order.splice(to, 1)[0]
@@ -662,7 +670,7 @@ function deleteEvaluation(evaluationIndex) {
                   </select>
                 </div>
                 <div class="basis-2/3">
-                  <label for="name" class="block text-gray-700 font-bold mb-1"
+                  <label for="requirement" class="block text-gray-700 font-bold mb-1"
                     >Inject Completion Requirement</label
                   >
                   <select
@@ -676,6 +684,7 @@ function deleteEvaluation(evaluationIndex) {
                       :key="inject.uuid"
                       :value="inject.uuid"
                       :title="inject.uuid"
+                      :disabled="inject.uuid == selectedInject.uuid"
                     >
                       {{ inject.name }}
                     </option>
