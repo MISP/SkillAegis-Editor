@@ -1,9 +1,6 @@
 <script setup>
-
 </script>
 
 <template>
-    <div>
-        Inject Tester
-    </div>
+  <Alert title="Inject Tester - To be implemeted" variant="warning"></Alert>
 </template>
