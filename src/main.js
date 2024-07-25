@@ -20,7 +20,6 @@ import { fetchScenarios } from './api'
 
 
 const routes = [
-    { path: '/', component: ScenarioList },
     { path: '/scenarios/index', name: 'Scenario Index', component: ScenarioList, meta: { requiresScenarioSelection: false }, },
     { path: '/scenarios/add', name: 'New Scenario', component: ScenarioNew, meta: { requiresScenarioSelection: false }, },
     { path: '/scenarios/overview/:uuid?', name: 'Scenario Overview', component: ScenarioOverview, meta: { requiresScenarioSelection: true }, props: true },

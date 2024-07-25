@@ -86,7 +86,7 @@ onMounted(() => {
       {{ props.message }}
     </div>
     <div v-if="props.confirm" class="flex gap-1">
-      <button class="btn btn-info" @click="callConfirmCb()">
+      <button :class="`btn btn-${props.variant}`" @click="callConfirmCb()">
         <FontAwesomeIcon :icon="faCheck" class="fa-fw"></FontAwesomeIcon> Confirm
       </button>
       <button class="btn" @click="close()">

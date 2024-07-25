@@ -9,9 +9,10 @@ import uuid
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-ACTIVE_EXERCISES_DIR = "exercises"
+ACTIVE_EXERCISES_DIR = "scenarios"
 script_dir = Path(__file__).parent / ACTIVE_EXERCISES_DIR
 EXERCISE_DIR = Path('/home/sami/git/SkillAegis') / ACTIVE_EXERCISES_DIR
 
@@ -273,11 +274,6 @@ class InjectOrder(BaseModel):
     inject_uuids: list
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
 @app.get("/scenarios/index")
 def scenarios_index():
     global scenarios, scenarioByUUID, readErrors
@@ -354,3 +350,5 @@ def save_inject(scenario_uuid: str, injectOrder: InjectOrder):
         return success(f"Injects reordered")
     return error('Could not reorder injects', result)
 
+
+app.mount('/', StaticFiles(directory='dist', html=True))
