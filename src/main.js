@@ -1,6 +1,6 @@
 import './assets/main.css'
 
-import { createWebHistory, createRouter } from 'vue-router'
+import { createWebHashHistory, createRouter } from 'vue-router'
 
 // import HomeView from './HomeView.vue'
 // import AboutView from './AboutView.vue'
@@ -28,7 +28,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes,
 })
 
