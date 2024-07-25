@@ -64,7 +64,23 @@ import NavLink from '@/components/NavLink.vue'
             </div>
           </div>
         </div>
+        <div class="ml-auto">
+          <div class="flex flex-col items-center mt-9">
+            <span id="logo"></span>
+            <span class="text-slate-400 mt-1">SkillAegis</span>
+          </div>
+        </div>
       </div>
     </div>
   </nav>
 </template>
+
+<style scoped>
+#logo {
+  background-image: url(@/assets/skillaegis-logo.svg);
+  width: 48px;
+  height: 48px;
+  display: block;
+  background-size: 48px;
+}
+</style>
