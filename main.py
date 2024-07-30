@@ -13,10 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-# ACTIVE_EXERCISES_DIR = "scenarios"
-# script_dir = Path(__file__).parent / ACTIVE_EXERCISES_DIR
-# EXERCISE_DIR = Path('/home/sami/git/SkillAegis') / ACTIVE_EXERCISES_DIR
-EXERCISE_DIR = Path(config.exercise_directory)
+EXERCISE_DIR = Path(os.getenv("EXERCISE_FOLDER", config.exercise_directory))
 
 app = FastAPI()
 
