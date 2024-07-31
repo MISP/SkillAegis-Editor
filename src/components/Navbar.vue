@@ -65,9 +65,12 @@ import NavLink from '@/components/NavLink.vue'
           </div>
         </div>
         <div class="ml-auto">
-          <div class="flex flex-col items-center mt-9">
+          <div class="flex flex-col items-center mt-16">
             <span id="logo"></span>
-            <span class="text-slate-400 mt-1">SkillAegis</span>
+            <span id="logo-text"></span>
+            <span class="text-slate-800 mt-0.5 font-bold px-2 py-0.25 rounded-md bg-slate-300 select-none">
+              Editor
+            </span>
           </div>
         </div>
       </div>
@@ -82,5 +85,17 @@ import NavLink from '@/components/NavLink.vue'
   height: 48px;
   display: block;
   background-size: 48px;
+}
+
+#logo-text {
+  margin-top: 0.6rem;
+  width: 110px;
+  height: 24px;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: initial;
+  background-image: url(@/assets/skillaegis-text.svg);
+  /* Forces color #94a3b8 */
+  filter: invert(72%) sepia(6%) saturate(998%) hue-rotate(176deg) brightness(90%) contrast(84%);
 }
 </style>
