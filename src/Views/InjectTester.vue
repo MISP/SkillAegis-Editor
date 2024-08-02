@@ -213,11 +213,11 @@ async function testInject() {
 <template>
   <div>
     <div
-      class="flex flex-row items-center justify-between border border-slate-400 shadow-md rounded-lg px-3 pt-2 pb-4 mb-2 text-"
+      class="flex flex-row flex-wrap items-center justify-between border border-slate-400 shadow-md rounded-lg px-3 pt-2 pb-4 mb-2 text-"
     >
       <div>
         <h3 class="text-lg">Evaluation Strategy</h3>
-        <div class="flex gap-x-4 mt-2">
+        <div class="flex flex-wrap gap-x-4 mt-2">
           <div
             class="relative flex w-56 items-center justify-center rounded-xl bg-gray-50 px-4 py-3 font-medium text-gray-700"
             v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES"
