@@ -323,7 +323,8 @@ def testInject(injectToTest) -> dict:
     elif inject_evaluation['evaluation_strategy'] == 'query_search':
         data_to_validate, error = fetch_data_for_query_search(misp_url, authkey, inject_evaluation)
         if data_to_validate is not False:
-            debug.append([{'message': f'Fetched entries', 'data': len(data_to_validate['response'])}])
+            data_length = len(data_to_validate['response']) if type(data_to_validate) is dict else len(data_to_validate)
+            debug.append([{'message': f'Fetched entries', 'data': data_length}])
             (success, inject_debug) = inject_evaluator.eval_query_search(user_id, inject_evaluation, data_to_validate, context, debug=True)
             debug = debug + inject_debug
         else:
