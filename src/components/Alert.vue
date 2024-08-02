@@ -66,5 +66,8 @@ const messages = computed(() => {
     >
       {{ message }}
     </p>
+    <div v-if="$slots.message" class="p-1">
+      <slot name="message" />
+    </div>
   </div>
 </template>

@@ -25,6 +25,28 @@ const ALLOWED_STRATEGIES = {
 const ALLOWED_TARGET_TOOLS = {
   MISP: 'MISP'
 }
+const COMPARISION_OPERATOR_PER_TYPE = {
+  string: {
+    contains:
+      'All values defined must be present in the data. Data will be split based on whitespace and lower-cased.',
+    equals: 'The data must be equals to the value.',
+    equals_any: 'At least one of the values must be present in the data.',
+    regex: 'Perform a regex match on the data.',
+    count:
+      'count the length of the string and compare against the provided value.\n Accepted values are `[number]` or `[operator][number]`. Examples: 12, >3, <=2.'
+  },
+  list: {
+    contains: 'All values defined must be present in the data.',
+    equals: 'All values defined must exactly be present in the data.',
+    'contains-regex': 'All regexes defined must exactly match in the data.',
+    count:
+      'count the amount of item and compare against the provided value.\n Accepted values are `[number]` or `[operator][number]`. Examples: 12, >3, <=2.'
+  },
+  object: {
+    count:
+      'count the amount of keys and compare against the provided value.\n Accepted values are `[number]` or `[operator][number]`. Examples: 12, >3, <=2.'
+  }
+}
 
 const OUTCOME_SUCCESS = 1,
   OUTCOME_FAILED = 2,
@@ -37,6 +59,7 @@ const TEST_GROUP_COLORS = ['cyan', 'amber', 'blue', 'pink', 'violet', 'green']
 
 const inject_eval = computed(() => JSON.parse(props.inject_evaluation || '{}'))
 const test_error = ref(null)
+const show_doc = ref(false)
 
 const target_tool = ref('MISP')
 const evaluation_strategy = ref([])
@@ -546,6 +569,34 @@ async function testInject() {
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="mt-3">
+      <Alert variant="info" title="Supported comparison operators per extracted data type">
+        <template #message>
+          <div>
+            <div>
+              <label for="showdoc" class="cursor-pointer select-none">
+                <input id="showdoc" type="checkbox" v-model="show_doc" class="mr-1" /> Show
+                Documentation
+              </label>
+            </div>
+            <div v-show="show_doc">
+              <ul>
+                <li v-for="(info, type) in COMPARISION_OPERATOR_PER_TYPE" :key="type">
+                  <span class="text-lg font-mono text-red-700">{{ type }}</span>
+                  <ul class="ml-5 mb-2">
+                    <li v-for="(text, operator) in info" :key="operator">
+                      <span class="font-semibold font-mono">{{ operator }}:</span>
+                      <span class="font-light ml-2 whitespace-break-spaces">{{ text }}</span>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </template>
+      </Alert>
     </div>
   </div>
 </template>

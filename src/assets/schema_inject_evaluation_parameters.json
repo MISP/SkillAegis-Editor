@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "Validator for misp-cexf - Inject evaluation parameters",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "additionalProperties": {
+            "type": "object",
+            "properties": {
+                "comparison": {
+                    "type": "string",
+                    "enum": [
+                        "contains",
+                        "equals",
+                        "equals_any",
+                        "regex",
+                        "contains-regex",
+                        "count"
+                    ]
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            }
+                        ]
+                    }
+                },
+                "extract_type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "comparison",
+                "values"
+            ]
+        }
+    }
+}
