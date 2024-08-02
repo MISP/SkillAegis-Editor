@@ -6,11 +6,11 @@ import NavLink from '@/components/NavLink.vue'
 
 <template>
   <nav class="">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-b border-slate-600">
-      <div class="flex h-16 items-center justify-between">
-        <div class="flex items-center">
+    <div class="mx-auto 2xl:max-w-7xl max-w-10xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between relative">
+        <div class="flex items-center py-2 border-b border-slate-600">
           <div class="">
-            <div class="ml-10 flex space-x-4">
+            <div class="mx-10 flex space-x-4">
               <NavLink to="/scenarios/index" class="">Scenario List</NavLink>
               <NavLink
                 :to="`/scenarios/overview/${selectedScenarioUUID}`"
@@ -64,11 +64,13 @@ import NavLink from '@/components/NavLink.vue'
             </div>
           </div>
         </div>
-        <div class="ml-auto">
+        <div class="ml-auto mt-[24px] hidden sm:block">
           <div class="flex flex-col items-center mt-16">
             <span id="logo"></span>
             <span id="logo-text"></span>
-            <span class="text-slate-800 mt-0.5 font-bold px-2 py-0.25 rounded-md bg-slate-300 select-none">
+            <span
+              class="text-slate-800 mt-0.5 font-bold px-2 py-0.25 rounded-md bg-slate-300 select-none"
+            >
               Editor
             </span>
           </div>

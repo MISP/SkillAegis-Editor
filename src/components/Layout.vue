@@ -12,8 +12,8 @@ import SafeComponent from '@/components/SafeComponent.vue'
       <Navbar></Navbar>
 
       <header class="shadow">
-        <div class="mx-auto max-w-7xl py-8 px-4">
-          <h1 class="text-3xl font-bold tracking-tight text-white">
+        <div class="mx-auto w-11/12 max-w-10xl py-8 px-4">
+          <h1 class="text-3xl font-bold tracking-tight text-white select-none">
             {{ $route.name }}
             <span v-show="$route.name !== 'Scenarios List' && selectedScenario !== null">
               <FontAwesomeIcon :icon="faCaretRight" class="fa-fw"></FontAwesomeIcon>

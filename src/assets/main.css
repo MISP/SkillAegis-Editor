@@ -30,6 +30,34 @@ body,
     opacity: 0;
 }
 
+.slide-right-fade-enter-active {
+    transition: all 0.2s ease-out;
+}
+
+.slide-right-fade-leave-active {
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-right-fade-enter-from,
+.slide-right-fade-leave-to {
+    transform: translateX(-15px);
+    opacity: 0;
+}
+
+.slide-left-fade-enter-active {
+    transition: all 0.2s ease-out;
+}
+
+.slide-left-fade-leave-active {
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-left-fade-enter-from,
+.slide-left-fade-leave-to {
+    transform: translateX(15px);
+    opacity: 0;
+}
+
 .slide-fade-reverse-enter-active {
     transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
 }
@@ -58,17 +86,28 @@ body,
     @apply text-sm;
 }
 
+.btn-block {
+    @apply w-full;
+}
+
 .btn:not(:disabled) {
     @apply hover:bg-slate-200 hover:border-slate-300;
     @apply active:scale-90
 }
+
 
 .btn:disabled {
     @apply cursor-not-allowed opacity-60;
 }
 
 .btn-info:not(:disabled) {
+    &.btn-colored {
+        @apply bg-blue-500 border-blue-700 text-white;
+        @apply hover:bg-blue-600 hover:border-blue-800 hover:text-white;
+    }
+
     @apply hover:bg-blue-500 hover:border-blue-700 hover:text-white;
+    @apply active:scale-95
 }
 
 .btn-danger:not(:disabled) {

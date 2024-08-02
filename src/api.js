@@ -13,6 +13,7 @@ const endpoints = {
     'inject-save': '/scenarios/save-inject',
     'inject-delete': '/scenarios/delete-inject',
     'inject-order': '/scenarios/order-inject',
+    'inject-test': '/injects/test',
 }
 
 async function get(url) {
@@ -108,5 +109,10 @@ export async function saveInjectOrder(scenario_uuid, injectOrder) {
     const payload = {
         inject_uuids: injectOrder
     }
+    return await post(url, payload)
+}
+
+export async function testInject(payload) {
+    const url = endpoints['inject-test']
     return await post(url, payload)
 }

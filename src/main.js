@@ -24,7 +24,7 @@ const routes = [
     { path: '/scenarios/add', name: 'New Scenario', component: ScenarioNew, meta: { requiresScenarioSelection: false }, },
     { path: '/scenarios/overview/:uuid?', name: 'Scenario Overview', component: ScenarioOverview, meta: { requiresScenarioSelection: true }, props: true },
     { path: '/scenarios/designer/:uuid?', name: 'Scenario Designer', component: ScenarioDesigner, meta: { requiresScenarioSelection: true }, props: true },
-    { path: '/injects/tester/:uuid?', name: 'Inject Tester', component: InjectTester, props: true },
+    { path: '/injects/tester/:inject_evaluation?', name: 'Inject Tester', component: InjectTester, props: true },
 ]
 
 const router = createRouter({

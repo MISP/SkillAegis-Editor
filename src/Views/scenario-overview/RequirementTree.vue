@@ -1,4 +1,5 @@
 <script setup>
+import { faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { selectedScenario as originalSelectedScenario } from '@/store.js'
 import { computed, ref } from 'vue'
 
@@ -60,13 +61,17 @@ const hoveredInjectUUID = ref(null)
         <table class="w-full group">
           <thead>
             <tr>
+              <th class="text-left"></th>
               <th class="text-left">Inject</th>
-              <th class="text-left">Requires Completion</th>
+              <th class="text-left px-2">Requires Completion</th>
               <th class="text-left">Dependent Injects</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="injF in inject_flow" :key="injF.inject_uuid">
+            <tr v-for="(injF, i) in inject_flow" :key="injF.inject_uuid">
+              <td class="py-1 px-2 text-slate-500 text-sm select-none">
+                <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> {{ i+1 }}
+              </td>
               <td class="py-1 px-2">
                 <a
                   @mouseover="hoveredInjectUUID = injF.inject_uuid"
@@ -83,7 +88,7 @@ const hoveredInjectUUID = ref(null)
                     injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid === undefined ||
                     injectFlowByUUID[injF.inject_uuid].requirements?.inject_uuid === null
                   "
-                  class="text-slate-500 text-sm"
+                  class="text-slate-500 text-sm select-none"
                   >- no requirements -</span
                 >
                 <div v-else>
@@ -109,7 +114,7 @@ const hoveredInjectUUID = ref(null)
               <td class="py-1 px-2">
                 <span
                   v-if="dependencies[injF.inject_uuid].length == 0"
-                  class="text-slate-500 text-sm"
+                  class="text-slate-500 text-sm select-none"
                   >- no dependencies -</span
                 >
                 <div class="flex flex-col gap-1">

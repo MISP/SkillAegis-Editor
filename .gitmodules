@@ -1,0 +1,3 @@
+[submodule "tools/SkillAegis-Dashboard"]
+	path = tools/SkillAegis-Dashboard
+	url = git@github.com:MISP/SkillAegis-Dashboard.git

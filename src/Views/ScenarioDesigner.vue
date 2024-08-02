@@ -349,6 +349,10 @@ function cancel() {
   router.push({ name: 'Scenario Overview', params: { uuid: props.uuid }, props: true })
 }
 
+function testInject(inject_evaluation) {
+  router.push({ name: 'Inject Tester', params: { inject_evaluation: JSON.stringify(inject_evaluation) }, props: true })
+}
+
 const sortable = ref()
 async function revertInjectOrderChanges() {
   if (sortable.value?.sortable) {
@@ -427,14 +431,14 @@ function deleteEvaluation(evaluationIndex) {
   <div>
     <div class="flex justify-end gap-2">
       <button class="btn btn-danger select-none" @click="cancel()">
-        <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>Cancel Changes
+        <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon> Cancel Changes
       </button>
       <button
         :class="`btn btn-success select-none ${canBeSaved ? 'highlight-success' : ''}`"
         @click="saveInjectChanges()"
         :disabled="!canBeSaved"
       >
-        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>Save Inject Changes
+        <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon> Save Inject Changes
       </button>
     </div>
 
@@ -714,13 +718,19 @@ function deleteEvaluation(evaluationIndex) {
                   >
                     <span>Evaluation {{ i + 1 }}</span>
                     <button
-                      class="btn btn-sm btn-danger select-none ml-1"
+                      class="btn btn-sm btn-danger select-none ml-2"
                       @click="deleteEvaluation(i)"
                     >
                       <FontAwesomeIcon :icon="faTrash" class="fa-fw"></FontAwesomeIcon>
                     </button>
+                    <button
+                      class="btn btn-sm btn-info select-none"
+                      @click="testInject(selectedInject.inject_evaluation[i])"
+                    >
+                      <FontAwesomeIcon :icon="faListCheck" class="fa-fw"></FontAwesomeIcon>
+                    </button>
                   </span>
-                  <div class="flex gap-3 mt-5">
+                  <div class="flex gap-3 mt-8">
                     <div class="basis-1/3">
                       <div>
                         <div class="font-semibold pt-1 text-nowrap">Evaluation Strategy</div>

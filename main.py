@@ -5,15 +5,24 @@ import os
 from typing import Any, Dict, Union
 from pathlib import Path
 import json
+from urllib.parse import urljoin
 import uuid
+import importlib.util
+import sys
+import requests
+
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import config
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 EXERCISE_DIR = Path(os.getenv("EXERCISE_FOLDER", config.exercise_directory))
+INJECT_EVAL_SUCCESS = 1
+INJECT_EVAL_FAIL = 2
 
 app = FastAPI()
 
@@ -29,6 +38,35 @@ scenarios = []
 scenarioByUUID = {}
 scenarioFilenameByUUID = {}
 readErrors = {}
+
+
+def register_exception(app: FastAPI):
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+
+        exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+        content = {'status_code': 10422, 'message': exc_str, 'data': None}
+        return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+def loadInjectEvaluator():
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    subdir = "/tools/SkillAegis-Dashboard/inject_evaluator.py"
+    spec = importlib.util.spec_from_file_location("inject_evaluator", current_dir + subdir)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["inject_evaluator"] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def loadExerciseModel():
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    subdir = "/tools/SkillAegis-Dashboard/exercise.py"
+    spec = importlib.util.spec_from_file_location("exercise", current_dir + subdir)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["exercise"] = mod
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def read_exercise_dir():
@@ -244,6 +282,87 @@ def orderInjects(scenario_uuid, inject_uuids) -> Union[bool, str]:
     return saveResult
 
 
+def testJQ(path: str, data: dict):
+    inject_evaluator = loadInjectEvaluator()
+    result = inject_evaluator.jq_extract(path, data)
+    return result
+
+
+def testInject(injectToTest) -> dict:
+    inject_evaluator = loadInjectEvaluator()
+
+    user_id = 0
+    misp_url = injectToTest.query_search_misp_url
+    authkey = injectToTest.query_search_misp_apikey
+    inject_evaluation = {
+        'parameters': injectToTest.eval_params,
+        'evaluation_strategy': injectToTest.evaluation_strategy,
+        'evaluation_context': {
+            'query_context': {
+                'url': injectToTest.query_search_url if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_url,
+                'request_method': injectToTest.query_search_method if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_method,
+                'payload': injectToTest.query_search_payload if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_payload,
+            }
+        },
+        'score_range': [0, 10],
+    }
+    context = {}
+
+    test_result = {
+        'outcome': 1,
+        'debug': {},
+    }
+    success = False
+    debug = []
+    if inject_evaluation['evaluation_strategy'] == 'data_filtering':
+        data_to_validate = injectToTest.test_data
+        (success, inject_debug) = inject_evaluator.eval_data_filtering(authkey, inject_evaluation, data_to_validate, context, debug=True)
+        debug = debug + inject_debug
+    elif inject_evaluation['evaluation_strategy'] == 'query_mirror':
+        pass  # Not implemented
+    elif inject_evaluation['evaluation_strategy'] == 'query_search':
+        data_to_validate, error = fetch_data_for_query_search(misp_url, authkey, inject_evaluation)
+        if data_to_validate is not False:
+            debug.append([{'message': f'Fetched entries', 'data': len(data_to_validate['response'])}])
+            (success, inject_debug) = inject_evaluator.eval_query_search(user_id, inject_evaluation, data_to_validate, context, debug=True)
+            debug = debug + inject_debug
+        else:
+            debug.append([{'message': f'Error while fetching data', 'data': error}])
+    test_result['outcome'] = INJECT_EVAL_SUCCESS if success else INJECT_EVAL_FAIL
+    test_result['debug'] = debug
+    return test_result
+
+
+def fetch_data_for_query_search(misp_url, authkey, inject_evaluation):
+    query_context = inject_evaluation['evaluation_context']['query_context']
+    search_method = query_context['request_method']
+    search_url = query_context['url']
+    search_payload = query_context['payload']
+    search_data, success  = doRestQuery(misp_url ,authkey, search_method, search_url, search_payload)
+    return (search_data, None,) if success else (False, search_data,)
+
+
+def doRestQuery(misp_url, authkey, method, url, payload) -> tuple:
+    headers = {
+        'User-Agent': 'SkillAegis',
+        "Authorization": authkey,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    full_url = urljoin(misp_url, url)
+    try:
+        if method == 'POST':
+            response = requests.post(full_url, data=json.dumps(payload), headers=headers, verify=False)
+        else:
+            response = requests.get(full_url, data=json.dumps(payload), headers=headers, verify=False)
+    except Exception as e:
+        return (e, False)
+    try:
+        return (response.json(), True,) if response.headers['content-type'].startswith('application/json') else (response.text, True,)
+    except requests.exceptions.JSONDecodeError:
+        return (response.text, True,)
+
+
 class Exercise(BaseModel):
     name: str
     namespace: str
@@ -271,6 +390,24 @@ class InjectFlow(BaseModel):
 
 class InjectOrder(BaseModel):
     inject_uuids: list
+
+
+class InjectToTestPayload(BaseModel):
+    target_tool: str
+    evaluation_strategy: str
+    eval_params: list | None = []
+
+    test_data: dict | None = {}
+
+    query_mirror_url: str | None = None
+    query_mirror_method: str | None = None
+    query_mirror_payload: list | None = []
+
+    query_search_url: str | None = None
+    query_search_method: str | None = None
+    query_search_payload: dict | None = {}
+    query_search_misp_url: str | None = None
+    query_search_misp_apikey: str | None = None
 
 
 @app.get("/scenarios/index")
@@ -348,6 +485,12 @@ def save_inject(scenario_uuid: str, injectOrder: InjectOrder):
     if result is True:
         return success(f"Injects reordered")
     return error('Could not reorder injects', result)
+
+
+@app.post("/injects/test")
+def save_inject(injectToTest: InjectToTestPayload):
+    result = testInject(injectToTest)
+    return success(f"Injects tested", "Result is attached", result)
 
 
 app.mount('/', StaticFiles(directory='dist', html=True))
