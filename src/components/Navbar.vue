@@ -2,6 +2,13 @@
 import { selectedScenario, selectedScenarioUUID, store } from '@/store.js'
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import NavLink from '@/components/NavLink.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const allRoutes = {}
+router.getRoutes().forEach((route) => {
+  allRoutes[route.name] = route
+})
 </script>
 
 <template>
@@ -15,12 +22,14 @@ import NavLink from '@/components/NavLink.vue'
               <NavLink
                 :to="`/scenarios/overview/${selectedScenarioUUID}`"
                 :title="`${
-                  $route.meta.requiresScenarioSelection && selectedScenarioUUID
+                  allRoutes['Scenario Overview'].meta.requiresScenarioSelection &&
+                  selectedScenarioUUID
                     ? ''
                     : 'Select a scenario'
                 }`"
                 :class="`flex flex-col justify-center ${
-                  $route.meta.requiresScenarioSelection && selectedScenarioUUID !== null
+                  allRoutes['Scenario Overview'].meta.requiresScenarioSelection &&
+                  selectedScenarioUUID !== null
                     ? ''
                     : '!cursor-not-allowed opacity-60'
                 }`"
@@ -39,12 +48,14 @@ import NavLink from '@/components/NavLink.vue'
               <NavLink
                 :to="`/scenarios/designer/${selectedScenarioUUID}`"
                 :title="`${
-                  $route.meta.requiresScenarioSelection && selectedScenarioUUID
+                  allRoutes['Scenario Designer'].meta.requiresScenarioSelection &&
+                  selectedScenarioUUID
                     ? ''
                     : 'Select a scenario'
                 }`"
                 :class="`flex flex-col justify-center ${
-                  $route.meta.requiresScenarioSelection && selectedScenarioUUID !== null
+                  allRoutes['Scenario Designer'].meta.requiresScenarioSelection &&
+                  selectedScenarioUUID !== null
                     ? ''
                     : '!cursor-not-allowed opacity-60'
                 }`"

@@ -256,7 +256,7 @@ async function testInject() {
               :id="`radio_${strategy}`"
             />
             <label
-              class="peer-checked:[#22d3ee] peer-checked:bg-[#def8fc] absolute top-0 h-full w-full cursor-pointer rounded-xl border peer-checked:border-[#22d3ee]"
+              class="peer-checked:[#22d3ee] peer-checked:bg-[#def8fc] absolute top-0 h-full w-full cursor-pointer rounded-xl border peer-checked:border-[#22d3ee] hover:border-cyan-400"
               :title="strategy_info"
               :for="`radio_${strategy}`"
             >
