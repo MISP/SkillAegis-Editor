@@ -12,8 +12,11 @@ import {
   faTrash,
   faPlus,
   faArrowsRotate,
-  faEye
+  faEye,
+  faFileCode
 } from '@fortawesome/free-solid-svg-icons'
+import JsonEditorVue from 'json-editor-vue'
+import { Mode } from 'vanilla-jsoneditor'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,14 +88,20 @@ async function deleteScenario(uuid) {
 }
 
 const showModal = ref(false)
+const showModalError = ref(false)
 const selectedFilename = ref('')
 const selectedFileError = ref('')
 const selectedFileContent = ref('')
-function viewFile(filename, read_error) {
-  showModal.value = true
+function viewFileError(filename, read_error) {
+  showModalError.value = true
   selectedFilename.value = filename
   selectedFileError.value = read_error.error
   selectedFileContent.value = read_error.text
+}
+function viewFile(filename, content) {
+  showModal.value = true
+  selectedFilename.value = filename
+  selectedFileContent.value = content
 }
 </script>
 
@@ -102,42 +111,41 @@ function viewFile(filename, read_error) {
       <FontAwesomeIcon :icon="faSpinner" class="text-4xl fa-spin"></FontAwesomeIcon>
     </div>
 
-    <Teleport to="body">
-      <Transition>
-        <div
-          v-if="showModal"
-          class="fixed w-4/6 top-20 left-2/4 -translate-x-1/2 rounded-lg border border-slate-800 shadow-lg z-50"
-        >
-          <Teleport to="body">
-            <div
-              @click="showModal = false"
-              class="bg-white/30 backdrop-blur-sm fixed top-0 bottom-0 left-0 right-0 z-40 cursor-pointer"
-            ></div>
-          </Teleport>
-          <div class="px-4 py-3 bg-slate-700 rounded-t-lg border-b border-slate-800">
-            <h2 class="text-white font-semibold text-lg">
-              Content of file <code>{{ selectedFilename }}</code>
-            </h2>
-          </div>
-          <div class="px-4 py-3 bg-slate-100">
-            <div>
-              <strong>Error:</strong>
-              <span class="ml-2 font-mono">{{ selectedFileError }}</span>
-            </div>
-            <div
-              class="mt-2 border border-slate-900 bg-white p-2 overflow-auto max-h-[calc(100vh-24rem)]"
-            >
-              <pre class="text-sm">{{ selectedFileContent }}</pre>
-            </div>
-          </div>
-          <div class="px-4 py-3 bg-slate-100 rounded-b-lg">
-            <div class="flex flex-row-reverse">
-              <button class="btn btn-info" @click="showModal = false">Ok</button>
-            </div>
-          </div>
+    <Modal :showModal="showModalError" @modal-close="showModalError = false">
+      <template #header>
+        Content of file<code class="font-semibold ml-2">{{ selectedFilename }}</code>
+      </template>
+      <template #body>
+        <div>
+          <strong>Error:</strong>
+          <span class="ml-2 font-mono">{{ selectedFileError }}</span>
         </div>
-      </Transition>
-    </Teleport>
+        <div
+          class="mt-2 border border-slate-900 bg-white p-2 overflow-auto max-h-[calc(100vh-24rem)]"
+        >
+          <pre class="text-sm">{{ selectedFileContent }}</pre>
+        </div>
+      </template>
+    </Modal>
+    <Modal :showModal="showModal" @modal-close="showModal = false">
+      <template #header
+        >Content of scenario
+        <code class="font-semibold ml-2">{{ selectedFilename }}</code></template
+      >
+      <template #body>
+        <div>
+          <JsonEditorVue
+            v-model="selectedFileContent"
+            :mode="Mode.text"
+            :mainMenuBar="false"
+            :navigationBar="false"
+            :statusBar="false"
+            :indentation="2"
+            class="shadow-lg border w-full max-h-[calc(100vh-24rem)] overflow-y-auto"
+          />
+        </div>
+      </template>
+    </Modal>
 
     <Alert
       v-if="error"
@@ -221,6 +229,12 @@ function viewFile(filename, read_error) {
               class="rounded-br-lg border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 p-1 text-left"
             >
               <div class="flex gap-1">
+                <button
+                  class="btn"
+                  @click="viewFile(scenario.exercise.name, JSON.stringify(scenario, undefined, 2))"
+                >
+                  <FontAwesomeIcon :icon="faFileCode" class="fa-fw"></FontAwesomeIcon>
+                </button>
                 <button class="btn" @click="selectScenario(scenario.exercise.uuid)">
                   <FontAwesomeIcon :icon="faEdit" class="fa-fw"></FontAwesomeIcon>
                 </button>
@@ -261,7 +275,7 @@ function viewFile(filename, read_error) {
           <span class="font-mono text-sm flex items-center ml-5">{{ read_error.error }}</span>
           <span class="ml-auto">
             <div class="flex gap-1">
-              <button class="btn" @click="viewFile(filename, read_error)">
+              <button class="btn" @click="viewFileError(filename, read_error)">
                 <FontAwesomeIcon :icon="faEye" class="fa-fw"></FontAwesomeIcon>
               </button>
             </div>
@@ -273,7 +287,7 @@ function viewFile(filename, read_error) {
 </template>
 
 <style>
-.v-enter-active {
+/* .v-enter-active {
   @apply transition-all;
   @apply duration-200;
 }
@@ -292,5 +306,5 @@ function viewFile(filename, read_error) {
   @apply opacity-0;
   @apply -translate-y-12;
   @apply -translate-x-1/2;
-}
+} */
 </style>

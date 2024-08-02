@@ -16,6 +16,7 @@ import { createApp, ref } from 'vue'
 import App from './App.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import Alert from '@/components/Alert.vue'
+import Modal from '@/components/Modal.vue'
 import { fetchScenarios } from './api'
 
 
@@ -76,5 +77,6 @@ export function ajaxFeedback(response) {
 const app = createApp(App)
 app.component('FontAwesomeIcon', FontAwesomeIcon)
 app.component('Alert', Alert)
+app.component('Modal', Modal)
 app.use(router)
 app.mount('#app')
