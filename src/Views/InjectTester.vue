@@ -11,7 +11,7 @@ import {
 import JsonEditorVue from 'json-editor-vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { testInject as testInjectAPI } from '@/api'
+import { testInject as testInjectAPI, testJqPath as testJqPathAPI } from '@/api'
 
 const props = defineProps({
   inject_evaluation: String
@@ -60,6 +60,14 @@ const TEST_GROUP_COLORS = ['cyan', 'amber', 'blue', 'pink', 'violet', 'green']
 const inject_eval = computed(() => JSON.parse(props.inject_evaluation || '{}'))
 const test_error = ref(null)
 const show_doc = ref(false)
+const showModalTestJQ = ref(false)
+const jq_tester_path = ref('')
+const jq_tester_data = ref('{"Event": {"info": "My Event"}}')
+const jq_tester_extract_type = ref('all')
+const jq_tester_result = ref()
+const jq_tester_valid_inputs = computed(
+  () => jq_tester_data.value.length > 0 && jq_tester_path.value.length > 0
+)
 
 const target_tool = ref('MISP')
 const evaluation_strategy = ref([])
@@ -229,6 +237,25 @@ async function testInject() {
     testResult.value = await testInjectAPI(payload)
   } catch (error) {
     test_error.value = error
+  }
+}
+
+async function testJqPath() {
+  jq_tester_result.value = undefined
+  const payload = {
+    path: jq_tester_path.value,
+    data: JSON.parse(jq_tester_data.value),
+    extract_type: jq_tester_extract_type.value
+  }
+  try {
+    const result = await testJqPathAPI(payload)
+    if (result.success === false) {
+      jq_tester_result.value = JSON.stringify(result, undefined, 2)
+    } else {
+      jq_tester_result.value = JSON.stringify(result.data, undefined, 2)
+    }
+  } catch (error) {
+    jq_tester_result.value = error
   }
 }
 </script>
@@ -571,32 +598,111 @@ async function testInject() {
       </div>
     </div>
 
-    <div class="mt-3">
-      <Alert variant="info" title="Supported comparison operators per extracted data type">
-        <template #message>
+    <div class="mt-6">
+      <div class="rounded shadow-md bg-white">
+        <div class="bg-slate-600 shadow px-4 py-2 text-gray-50 rounded-t">Documentation</div>
+        <div class="px-3 py-2">
           <div>
-            <div>
-              <label for="showdoc" class="cursor-pointer select-none">
-                <input id="showdoc" type="checkbox" v-model="show_doc" class="mr-1" /> Show
-                Documentation
-              </label>
-            </div>
-            <div v-show="show_doc">
-              <ul>
-                <li v-for="(info, type) in COMPARISION_OPERATOR_PER_TYPE" :key="type">
-                  <span class="text-lg font-mono text-red-700">{{ type }}</span>
-                  <ul class="ml-5 mb-2">
-                    <li v-for="(text, operator) in info" :key="operator">
-                      <span class="font-semibold font-mono">{{ operator }}:</span>
-                      <span class="font-light ml-2 whitespace-break-spaces">{{ text }}</span>
+            <button class="btn select-none mb-2" @click="showModalTestJQ = true">
+              Test <code class="text-gray-500">./jq</code> path
+            </button>
+
+            <Modal :showModal="showModalTestJQ" @modal-close="showModalTestJQ = false">
+              <template #header>Test <code class="text-gray-500">./jq</code> path</template>
+              <template #body>
+                <div class="">
+                  <div class="font-semibold pt-1 text-nowrap">Data</div>
+                  <div class="min-w-60">
+                    <JsonEditorVue
+                      v-model="jq_tester_data"
+                      :mode="Mode.text"
+                      :mainMenuBar="false"
+                      :indentation="4"
+                      class="shadow border w-full max-h-60 overflow-auto"
+                    />
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <div class="font-semibold pt-1 text-nowrap">
+                    <code class="text-gray-500">./jq</code> Path
+                  </div>
+                  <div class="min-w-60">
+                    <input
+                      type="text"
+                      v-model="jq_tester_path"
+                      class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                      placeholder=".Event.info"
+                      @keypress.enter="jq_tester_valid_inputs && testJqPath()"
+                    />
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <div class="font-semibold pt-1 text-nowrap">Extract Type</div>
+                  <div class="inline-flex gap-1">
+                    <input type="radio" id="first" value="first" v-model="jq_tester_extract_type" />
+                    <label for="first">First</label>
+                  </div>
+
+                  <div class="inline-flex gap-1 ml-3">
+                    <input type="radio" id="all" value="all" v-model="jq_tester_extract_type" />
+                    <label for="all">All</label>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <button
+                    class="btn btn-block btn-info btn-colored select-none my-2"
+                    @click="testJqPath()"
+                    :disabled="!jq_tester_valid_inputs"
+                  >
+                    Test
+                    <code :class="jq_tester_valid_inputs ? 'text-gray-200' : 'text-gray-500'"
+                      >./jq</code
+                    >
+                    path
+                  </button>
+                </div>
+                <div class="mt-2">
+                  <div class="font-semibold pt-1 text-nowrap">Result</div>
+                  <JsonEditorVue
+                    v-model="jq_tester_result"
+                    :mode="Mode.view"
+                    :mainMenuBar="false"
+                    :navigationBar="false"
+                    :indentation="4"
+                    class="shadow border w-full max-h-60 overflow-auto"
+                    readOnly
+                  />
+                </div>
+              </template>
+            </Modal>
+          </div>
+          <Alert variant="info" title="Supported comparison operators per extracted data type">
+            <template #message>
+              <div>
+                <div>
+                  <label for="showdoc" class="cursor-pointer select-none">
+                    <input id="showdoc" type="checkbox" v-model="show_doc" class="mr-1" /> Show
+                    Documentation
+                  </label>
+                </div>
+                <div v-show="show_doc">
+                  <ul>
+                    <li v-for="(info, type) in COMPARISION_OPERATOR_PER_TYPE" :key="type">
+                      <span class="text-lg font-mono text-red-700">{{ type }}</span>
+                      <ul class="ml-5 mb-2">
+                        <li v-for="(text, operator) in info" :key="operator">
+                          <span class="font-semibold font-mono">{{ operator }}:</span>
+                          <span class="font-light ml-2 whitespace-break-spaces">{{ text }}</span>
+                        </li>
+                      </ul>
                     </li>
                   </ul>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </template>
-      </Alert>
+                </div>
+              </div>
+            </template>
+          </Alert>
+        </div>
+      </div>
     </div>
   </div>
 </template>

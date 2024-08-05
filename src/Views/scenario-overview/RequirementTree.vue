@@ -70,7 +70,7 @@ const hoveredInjectUUID = ref(null)
           <tbody>
             <tr v-for="(injF, i) in inject_flow" :key="injF.inject_uuid">
               <td class="py-1 px-2 text-slate-500 text-sm select-none">
-                <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> {{ i+1 }}
+                <FontAwesomeIcon :icon="faHashtag"></FontAwesomeIcon> {{ i + 1 }}
               </td>
               <td class="py-1 px-2">
                 <a

@@ -282,12 +282,6 @@ def orderInjects(scenario_uuid, inject_uuids) -> Union[bool, str]:
     return saveResult
 
 
-def testJQ(path: str, data: dict):
-    inject_evaluator = loadInjectEvaluator()
-    result = inject_evaluator.jq_extract(path, data)
-    return result
-
-
 def testInject(injectToTest) -> dict:
     inject_evaluator = loadInjectEvaluator()
 
@@ -332,6 +326,18 @@ def testInject(injectToTest) -> dict:
     test_result['outcome'] = INJECT_EVAL_SUCCESS if success else INJECT_EVAL_FAIL
     test_result['debug'] = debug
     return test_result
+
+
+def testJqPath(path: str, data: dict, extract_type: str) -> tuple:
+    inject_evaluator = loadInjectEvaluator()
+    success = True
+    result = False
+    try:
+        result = inject_evaluator.jq_extract(path, data, extract_type)
+    except ValueError as e:
+        success = False
+        result = str(e)
+    return (success, result,)
 
 
 def fetch_data_for_query_search(misp_url, authkey, inject_evaluation):
@@ -409,6 +415,12 @@ class InjectToTestPayload(BaseModel):
     query_search_payload: dict | None = {}
     query_search_misp_url: str | None = None
     query_search_misp_apikey: str | None = None
+
+
+class JqPathToTestPayload(BaseModel):
+    path: str
+    data: dict | None = {}
+    extract_type: str = 'all'
 
 
 @app.get("/scenarios/index")
@@ -492,6 +504,15 @@ def save_inject(scenario_uuid: str, injectOrder: InjectOrder):
 def save_inject(injectToTest: InjectToTestPayload):
     result = testInject(injectToTest)
     return success(f"Injects tested", "Result is attached", result)
+
+
+@app.post("/injects/jq-path-test")
+def test_jq_path(jqPathToTest: JqPathToTestPayload):
+    testSuccess, result = testJqPath(jqPathToTest.path, jqPathToTest.data, jqPathToTest.extract_type)
+    if testSuccess:
+        return success(f"JQ path tested", "Result is attached", result)
+    else:
+        return error(f"Error during testing", result)
 
 
 app.mount('/', StaticFiles(directory='dist', html=True))

@@ -14,6 +14,7 @@ const endpoints = {
     'inject-delete': '/scenarios/delete-inject',
     'inject-order': '/scenarios/order-inject',
     'inject-test': '/injects/test',
+    'inject-jq-path-test': '/injects/jq-path-test',
 }
 
 async function get(url) {
@@ -114,5 +115,10 @@ export async function saveInjectOrder(scenario_uuid, injectOrder) {
 
 export async function testInject(payload) {
     const url = endpoints['inject-test']
+    return await post(url, payload)
+}
+
+export async function testJqPath(payload) {
+    const url = endpoints['inject-jq-path-test']
     return await post(url, payload)
 }
