@@ -13,17 +13,23 @@ import {
   faPlus,
   faArrowsRotate,
   faEye,
-  faFileCode
+  faFileCode,
+  faCircleCheck,
+  faCircleXmark
 } from '@fortawesome/free-solid-svg-icons'
 import JsonEditorVue from 'json-editor-vue'
-import { Mode } from 'vanilla-jsoneditor'
+import { Mode, createAjvValidator } from 'vanilla-jsoneditor'
 
 const route = useRoute()
 const router = useRouter()
+const schema = JSON.parse(JSON.stringify(store.cexf_schema))
+const schemaDefinitions = {}
+const validator = createAjvValidator({ schema, schemaDefinitions })
 
 const loading = ref(false)
 const scenarios = computed(() => store.scenarios)
 const read_errors = computed(() => store.read_errors)
+const scenario_validated_by_uuid = computed(() => store.scenario_validated_by_uuid)
 const error = ref(null)
 
 // watch the params of the route to fetch the data again
@@ -141,6 +147,8 @@ function viewFile(filename, content) {
             :navigationBar="false"
             :statusBar="false"
             :indentation="2"
+            :validator="validator"
+            :onValidationError="(err) => console.log(err)"
             class="shadow-lg border w-full max-h-[calc(100vh-24rem)] overflow-y-auto"
           />
         </div>
@@ -202,6 +210,27 @@ function viewFile(filename, content) {
               class="border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 p-1 font-semibold cursor-pointer"
               @click="selectScenario(scenario.exercise.uuid)"
             >
+              <span
+                :title="
+                  scenario_validated_by_uuid[scenario.exercise.uuid] === true
+                    ? 'CEXF Schema validity: Valid'
+                    : 'CEXF Schema validity: Invalid \n' +
+                      scenario_validated_by_uuid[scenario.exercise.uuid]
+                "
+              >
+                <FontAwesomeIcon
+                  :icon="
+                    scenario_validated_by_uuid[scenario.exercise.uuid] === true
+                      ? faCircleCheck
+                      : faCircleXmark
+                  "
+                  :class="
+                    scenario_validated_by_uuid[scenario.exercise.uuid] === true
+                      ? 'text-green-600'
+                      : 'text-red-600'
+                  "
+                ></FontAwesomeIcon>
+              </span>
               {{ scenario.exercise.name }}
             </td>
             <td

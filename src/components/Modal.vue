@@ -36,7 +36,7 @@ function closeModal() {
             <span class="ml-auto text-xl">
               <button
                 @click.stop="closeModal()"
-                class="hover:text-slate-200 text-slate-400 hover:dark:text-slate-50 hover:bg-slate-200/20 rounded-full p-1"
+                class="hover:text-slate-200 text-slate-400 hover:dark:text-slate-50 hover:bg-slate-200/20 rounded-full p-1 leading-6"
               >
                 <FontAwesomeIcon :icon="faTimes" class="fa-fw"></FontAwesomeIcon>
               </button>

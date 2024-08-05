@@ -59,6 +59,8 @@ export async function fetchScenarios() {
     const data = await get(endpoints['scenarios-index'])
     store.scenarios = data.scenarios
     store.read_errors = data.read_errors
+    store.scenario_validated_by_uuid = data.scenario_validated_by_uuid
+    store.cexf_schema = data.cexf_schema
 }
 
 export async function fetchScenario() {
@@ -69,6 +71,7 @@ export async function forceReload() {
     const data = await post(endpoints['scenarios-reload'])
     store.scenarios = data.scenarios
     store.read_errors = data.read_errors
+    store.scenario_validated_by_uuid = data.scenario_validated_by_uuid
 }
 
 export async function addScenario(payload) {

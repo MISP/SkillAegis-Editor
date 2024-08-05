@@ -10,6 +10,8 @@ import uuid
 import importlib.util
 import sys
 import requests
+import jsonschema
+from jsonschema import validate
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -21,6 +23,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 EXERCISE_DIR = Path(os.getenv("EXERCISE_FOLDER", config.exercise_directory))
+CEXF_SCHEMA_PATH = Path(__file__).parent / 'schema_cexf.json'
+CEXF_SCHEMA = {}
 INJECT_EVAL_SUCCESS = 1
 INJECT_EVAL_FAIL = 2
 
@@ -36,8 +40,17 @@ app.add_middleware(
 
 scenarios = []
 scenarioByUUID = {}
+scenarioValidatedByUUID = {}
 scenarioFilenameByUUID = {}
 readErrors = {}
+
+
+def load_schema(schema_path):
+    with open(schema_path, 'r') as schema_file:
+        schema = json.load(schema_file)
+    return schema
+
+CEXF_SCHEMA = load_schema(CEXF_SCHEMA_PATH)
 
 
 def register_exception(app: FastAPI):
@@ -97,10 +110,19 @@ def read_exercise_dir():
     return exercises
 
 
+def validate_json(data, schema) -> Union[bool, str]:
+    try:
+        validate(instance=data, schema=schema)
+        return True
+    except jsonschema.exceptions.ValidationError as err:
+        return str(err)
+
+
 def reloadJsonFiles():
-    global scenarios, scenarioByUUID
+    global scenarios, scenarioByUUID, scenarioValidatedByUUID
     scenarios = read_exercise_dir()
     scenarioByUUID = { e['exercise']['uuid']: e for e in scenarios }
+    scenarioValidatedByUUID = { e['exercise']['uuid']: validate_json(e, CEXF_SCHEMA) for e in scenarios }
 
 reloadJsonFiles()
 
@@ -425,22 +447,25 @@ class JqPathToTestPayload(BaseModel):
 
 @app.get("/scenarios/index")
 def scenarios_index():
-    global scenarios, scenarioByUUID, readErrors
+    global scenarios, scenarioByUUID, readErrors, scenarioValidatedByUUID, CEXF_SCHEMA
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
         'read_errors': readErrors,
+        'scenario_validated_by_uuid': scenarioValidatedByUUID,
+        'cexf_schema': CEXF_SCHEMA,
     }
 
 
 @app.post("/scenarios/reload")
 def scenarios_reload():
-    global scenarios, scenarioByUUID, readErrors
+    global scenarios, scenarioByUUID, readErrors, scenarioValidatedByUUID
     reloadJsonFiles()
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
         'read_errors': readErrors,
+        'scenario_validated_by_uuid': scenarioValidatedByUUID,
     }
 
 

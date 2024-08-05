@@ -1,0 +1,287 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "exercise": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "expanded": {
+                    "type": "string"
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "author": {
+                            "type": "string"
+                        },
+                        "level": {
+                            "type": "string"
+                        },
+                        "priority": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "author",
+                        "level",
+                        "priority"
+                    ]
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "total_duration": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "description",
+                "meta",
+                "name",
+                "namespace",
+                "uuid",
+                "version"
+            ]
+        },
+        "inject_flow": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "inject_uuid": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "reporting_callback": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "requirements": {
+                        "type": "object",
+                        "properties": {
+                            "inject_uuid": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "resolution_requirement": {
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "sequence": {
+                        "type": "object",
+                        "properties": {
+                            "completion_trigger": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "followed_by": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "trigger": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "completion_trigger",
+                            "followed_by",
+                            "trigger"
+                        ]
+                    },
+                    "timing": {
+                        "type": "object",
+                        "properties": {
+                            "triggered_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "triggered_at"
+                        ]
+                    }
+                },
+                "required": [
+                    "description",
+                    "inject_uuid",
+                    "requirements",
+                    "sequence"
+                ]
+            }
+        },
+        "inject_payloads": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        },
+        "injects": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "inject_evaluation": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "parameters": {
+                                    "type": "array",
+                                    "items": {
+                                        "anyOf": [
+                                            {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "comparison": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "contains",
+                                                                "equals",
+                                                                "equals_any",
+                                                                "regex",
+                                                                "contains-regex",
+                                                                "count"
+                                                            ]
+                                                        },
+                                                        "values": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "anyOf": [
+                                                                    {
+                                                                        "type": "string"
+                                                                    },
+                                                                    {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    {
+                                                                        "type": "number"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        "extract_type": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "first",
+                                                                "all"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "comparison",
+                                                        "values"
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "type": "object",
+                                                "additionalProperties": true
+                                            }
+                                        ]
+                                    }
+                                },
+                                "result": {
+                                    "type": "string"
+                                },
+                                "evaluation_strategy": {
+                                    "type": "string",
+                                    "enum": [
+                                        "data_filtering",
+                                        "query_mirror",
+                                        "query_search"
+                                    ]
+                                },
+                                "evaluation_context": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                },
+                                "score_range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                }
+                            },
+                            "required": [
+                                "parameters",
+                                "result",
+                                "evaluation_strategy",
+                                "evaluation_context",
+                                "score_range"
+                            ]
+                        }
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "target_tool": {
+                        "type": "string",
+                        "enum": [
+                            "MISP"
+                        ]
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "action",
+                    "inject_evaluation",
+                    "name",
+                    "target_tool",
+                    "uuid"
+                ]
+            }
+        }
+    },
+    "required": [
+        "exercise",
+        "inject_flow",
+        "inject_payloads",
+        "injects"
+    ]
+}
