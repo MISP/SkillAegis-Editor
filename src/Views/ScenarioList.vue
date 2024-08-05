@@ -22,9 +22,11 @@ import { Mode, createAjvValidator } from 'vanilla-jsoneditor'
 
 const route = useRoute()
 const router = useRouter()
-const schema = JSON.parse(JSON.stringify(store.cexf_schema))
-const schemaDefinitions = {}
-const validator = createAjvValidator({ schema, schemaDefinitions })
+const validator = createAjvValidator({
+  schema: JSON.parse(JSON.stringify(store.cexf_schema)),
+  schemaDefinitions: {},
+  ajvOptions: { strict: false }
+})
 
 const loading = ref(false)
 const scenarios = computed(() => store.scenarios)
@@ -98,16 +100,18 @@ const showModalError = ref(false)
 const selectedFilename = ref('')
 const selectedFileError = ref('')
 const selectedFileContent = ref('')
+const selectedParsedFileContent = ref('')
 function viewFileError(filename, read_error) {
   showModalError.value = true
   selectedFilename.value = filename
   selectedFileError.value = read_error.error
   selectedFileContent.value = read_error.text
 }
-function viewFile(filename, content) {
+function viewFile(filename, content, parsedContent) {
   showModal.value = true
   selectedFilename.value = filename
   selectedFileContent.value = content
+  selectedParsedFileContent.value = parsedContent
 }
 </script>
 
@@ -140,6 +144,16 @@ function viewFile(filename, content) {
       >
       <template #body>
         <div>
+          <div class="p-1"></div>
+          <div
+            v-show="scenario_validated_by_uuid[selectedParsedFileContent.exercise.uuid] !== true"
+          >
+            <div class="font-bold text-slate-800">CEXF Schema validation error:</div>
+            <pre
+              class="max-h-32 p-1 text-sm bg-white border border-red-600 shadow rounded overflow-auto mb-2"
+              >{{ scenario_validated_by_uuid[selectedParsedFileContent.exercise.uuid] }}</pre
+            >
+          </div>
           <JsonEditorVue
             v-model="selectedFileContent"
             :mode="Mode.text"
@@ -148,8 +162,7 @@ function viewFile(filename, content) {
             :statusBar="false"
             :indentation="2"
             :validator="validator"
-            :onValidationError="(err) => console.log(err)"
-            class="shadow-lg border w-full max-h-[calc(100vh-24rem)] overflow-y-auto"
+            class="shadow-lg border w-full max-h-[calc(100vh-24rem-7rem)] overflow-y-auto"
           />
         </div>
       </template>
@@ -260,7 +273,13 @@ function viewFile(filename, content) {
               <div class="flex gap-1">
                 <button
                   class="btn"
-                  @click="viewFile(scenario.exercise.name, JSON.stringify(scenario, undefined, 2))"
+                  @click="
+                    viewFile(
+                      scenario.exercise.name,
+                      JSON.stringify(scenario, undefined, 2),
+                      scenario
+                    )
+                  "
                 >
                   <FontAwesomeIcon :icon="faFileCode" class="fa-fw"></FontAwesomeIcon>
                 </button>
