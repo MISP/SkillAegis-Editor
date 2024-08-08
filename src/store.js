@@ -5,6 +5,7 @@ export const store = reactive({
     selected_scenario: null,
     scenarios: [],
     scenario_validated_by_uuid: [],
+    scenario_filename_by_uuid: [],
     read_errors: [],
     cexf_schema: {},
 })

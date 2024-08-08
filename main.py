@@ -96,7 +96,7 @@ def read_exercise_dir():
                 parsed_exercise = json.load(f)
                 exercises.append(parsed_exercise)
                 uuid = parsed_exercise['exercise']['uuid']
-                scenarioFilenameByUUID[uuid] = json_file
+                scenarioFilenameByUUID[uuid] = json_file.relative_to(EXERCISE_DIR)
             except json.JSONDecodeError as e:
                 relative_file = str(json_file.relative_to(EXERCISE_DIR))
                 errorStr = f"json.JSONDecodeError: {e.msg}"
@@ -260,6 +260,17 @@ def saveScenario(scenario_uuid: str, scenario: dict) -> Union[bool, str]:
     except Exception as e:
         print(e)
         return e
+    return True
+
+
+def saveJSON(filename: str, content: str) -> Union[bool, str]:
+    try:
+        with open(EXERCISE_DIR / filename, 'w') as f:
+            f.write(content)
+    except Exception as e:
+        print(e)
+        return e
+    reloadJsonFiles()
     return True
 
 
@@ -445,13 +456,19 @@ class JqPathToTestPayload(BaseModel):
     extract_type: str = 'all'
 
 
+class SaveJSONPayload(BaseModel):
+    filename: str
+    content: str
+
+
 @app.get("/scenarios/index")
 def scenarios_index():
-    global scenarios, scenarioByUUID, readErrors, scenarioValidatedByUUID, CEXF_SCHEMA
+    global scenarios, scenarioByUUID, readErrors, scenarioFilenameByUUID, scenarioValidatedByUUID, CEXF_SCHEMA
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
         'read_errors': readErrors,
+        'scenario_filename_by_uuid': scenarioFilenameByUUID,
         'scenario_validated_by_uuid': scenarioValidatedByUUID,
         'cexf_schema': CEXF_SCHEMA,
     }
@@ -459,12 +476,13 @@ def scenarios_index():
 
 @app.post("/scenarios/reload")
 def scenarios_reload():
-    global scenarios, scenarioByUUID, readErrors, scenarioValidatedByUUID
+    global scenarios, scenarioByUUID, readErrors, scenarioFilenameByUUID, scenarioValidatedByUUID
     reloadJsonFiles()
     return {
         'scenarios': scenarios,
         'scenario_by_uuid': scenarioByUUID,
         'read_errors': readErrors,
+        'scenario_filename_by_uuid': scenarioFilenameByUUID,
         'scenario_validated_by_uuid': scenarioValidatedByUUID,
     }
 
@@ -499,6 +517,14 @@ def scenarios_delete(uuid: str):
     if result is True:
         return success(f"Scenario deleted")
     return error('Could not delete scenario', result)
+
+
+@app.post("/scenarios/save-json")
+def save_json(saveJSONPayload: SaveJSONPayload):
+    result = saveJSON(saveJSONPayload.filename, saveJSONPayload.content)
+    if result is True:
+        return success(f"JSON saved")
+    return error('Could not save JSON', result)
 
 
 @app.post("/scenarios/save-inject/{scenario_uuid}")

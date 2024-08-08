@@ -3,7 +3,12 @@ import { store } from '@/store.js'
 import { ref, watch, onUpdated, onBeforeMount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ajaxFeedback, toast } from '@/main.js'
-import { deleteScenario as doDeleteScenario, fetchScenarios, forceReload } from '@/api.js'
+import {
+  deleteScenario as doDeleteScenario,
+  fetchScenarios,
+  forceReload,
+  saveJSON as saveJSONAPI
+} from '@/api.js'
 import {
   faWarning,
   faHashtag,
@@ -29,6 +34,7 @@ const loading = ref(false)
 const scenarios = computed(() => store.scenarios)
 const read_errors = computed(() => store.read_errors)
 const scenario_validated_by_uuid = computed(() => store.scenario_validated_by_uuid)
+const scenario_filename_by_uuid = computed(() => store.scenario_filename_by_uuid)
 const error = ref(null)
 
 // watch the params of the route to fetch the data again
@@ -101,6 +107,13 @@ async function deleteScenario(uuid) {
   fetchScenarios()
 }
 
+async function saveJSON() {
+  const result = await saveJSONAPI(selectedFilename.value, selectedFileContent.value)
+  ajaxFeedback(result)
+  fetchScenarios()
+  return result.success
+}
+
 const showModal = ref(false)
 const showModalError = ref(false)
 const selectedFilename = ref('')
@@ -151,6 +164,14 @@ function viewFile(filename, content, parsedContent) {
           />
         </div>
       </template>
+      <template #footer="{ close }">
+        <div class="flex flex-row-reverse gap-2">
+          <button class="btn btn-primary btn-lg" @click.stop="close()">Ok</button>
+          <button class="btn btn-success btn-lg" @click.stop="saveJSON() && close()">
+            Save JSON
+          </button>
+        </div>
+      </template>
     </Modal>
     <Modal :showModal="showModal" @modal-close="showModal = false">
       <template #header
@@ -179,6 +200,14 @@ function viewFile(filename, content, parsedContent) {
             :validator="validator"
             class="shadow-lg border w-full max-h-[calc(100vh-24rem-2rem)] overflow-y-auto"
           />
+        </div>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex flex-row-reverse gap-2">
+          <button class="btn btn-primary btn-lg" @click.stop="close()">Ok</button>
+          <button class="btn btn-success btn-lg" @click.stop="saveJSON() && close()">
+            Save JSON
+          </button>
         </div>
       </template>
     </Modal>
@@ -290,7 +319,7 @@ function viewFile(filename, content, parsedContent) {
                   class="btn"
                   @click="
                     viewFile(
-                      scenario.exercise.name,
+                      scenario_filename_by_uuid[scenario.exercise.uuid],
                       JSON.stringify(scenario, undefined, 2),
                       scenario
                     )
@@ -350,27 +379,6 @@ function viewFile(filename, content, parsedContent) {
 </template>
 
 <style>
-/* .v-enter-active {
-  @apply transition-all;
-  @apply duration-200;
-}
-.v-leave-active {
-  @apply transition-all;
-  @apply duration-200;
-}
-.v-enter-from {
-  opacity: 0;
-  @apply opacity-0;
-  @apply -translate-y-12;
-  @apply -translate-x-1/2;
-}
-.v-leave-to {
-  opacity: 0;
-  @apply opacity-0;
-  @apply -translate-y-12;
-  @apply -translate-x-1/2;
-} */
-
 .jse-main .jse-contents {
   overflow: auto;
   max-height: calc(100vh - 24rem - 13rem);

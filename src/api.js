@@ -10,6 +10,7 @@ const endpoints = {
     'scenarios-add': '/scenarios/add',
     'scenarios-edit': '/scenarios/edit',
     'scenarios-delete': '/scenarios/delete',
+    'scenarios-save-json': '/scenarios/save-json',
     'inject-save': '/scenarios/save-inject',
     'inject-delete': '/scenarios/delete-inject',
     'inject-order': '/scenarios/order-inject',
@@ -60,6 +61,7 @@ export async function fetchScenarios() {
     store.scenarios = data.scenarios
     store.read_errors = data.read_errors
     store.scenario_validated_by_uuid = data.scenario_validated_by_uuid
+    store.scenario_filename_by_uuid = data.scenario_filename_by_uuid
     store.cexf_schema = data.cexf_schema
 }
 
@@ -71,6 +73,7 @@ export async function forceReload() {
     const data = await post(endpoints['scenarios-reload'])
     store.scenarios = data.scenarios
     store.read_errors = data.read_errors
+    store.scenario_filename_by_uuid = data.scenario_filename_by_uuid
     store.scenario_validated_by_uuid = data.scenario_validated_by_uuid
 }
 
@@ -90,6 +93,15 @@ export async function deleteScenario(uuid) {
         store.scenarios = store.scenarios.filter((s) => s.exercise.uuid != uuid)
     }
     return data
+}
+
+export async function saveJSON(filename, content) {
+    const url = endpoints['scenarios-save-json']
+    const payload = {
+        filename: filename,
+        content: typeof content === 'object' ? JSON.stringify(content, undefined, 4) : content,
+    }
+    return await post(url, payload)
 }
 
 export async function saveInject(scenario_uuid, inject, injectFlow) {

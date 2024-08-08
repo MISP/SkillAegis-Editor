@@ -46,7 +46,7 @@ function closeModal() {
             <slot name="body"></slot>
           </div>
           <div class="px-4 py-3 bg-slate-100 rounded-b-lg">
-            <slot name="footer">
+            <slot name="footer" :close="closeModal">
               <div class="flex flex-row-reverse">
                 <button class="btn btn-primary btn-lg" @click.stop="closeModal()">Ok</button>
               </div>
