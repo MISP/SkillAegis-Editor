@@ -18,7 +18,12 @@
                             "type": "string"
                         },
                         "level": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "Beginner",
+                                "Advanced",
+                                "Expert"
+                            ]
                         },
                         "priority": {
                             "type": "integer",
