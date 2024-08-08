@@ -22,11 +22,8 @@ import { Mode, createAjvValidator } from 'vanilla-jsoneditor'
 
 const route = useRoute()
 const router = useRouter()
-const validator = createAjvValidator({
-  schema: JSON.parse(JSON.stringify(store.cexf_schema)),
-  schemaDefinitions: {},
-  ajvOptions: { strict: false }
-})
+
+const validator = ref()
 
 const loading = ref(false)
 const scenarios = computed(() => store.scenarios)
@@ -60,6 +57,15 @@ async function fetchData() {
 
   try {
     await fetchScenarios()
+    const schema = JSON.parse(
+      // AjvValidator doesn't support `uuid` format by default. Cheap trick to make it works without hurdles
+      JSON.stringify(store.cexf_schema).replaceAll(
+        '"format":"uuid"',
+        '"pattern":"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"'
+      )
+    )
+    const schemaDefinitions = {}
+    validator.value = createAjvValidator({ schema, schemaDefinitions })
   } catch (err) {
     error.value = err.toString()
   } finally {
@@ -133,7 +139,16 @@ function viewFile(filename, content, parsedContent) {
         <div
           class="mt-2 border border-slate-900 bg-white p-2 overflow-auto max-h-[calc(100vh-24rem)]"
         >
-          <pre class="text-sm">{{ selectedFileContent }}</pre>
+          <JsonEditorVue
+            v-model="selectedFileContent"
+            :mode="Mode.text"
+            :mainMenuBar="false"
+            :navigationBar="false"
+            :statusBar="false"
+            :indentation="2"
+            :validator="validator"
+            class="shadow-lg border w-full max-h-[calc(100vh-24rem-2rem)] overflow-y-auto"
+          />
         </div>
       </template>
     </Modal>
@@ -162,7 +177,7 @@ function viewFile(filename, content, parsedContent) {
             :statusBar="false"
             :indentation="2"
             :validator="validator"
-            class="shadow-lg border w-full max-h-[calc(100vh-24rem-7rem)] overflow-y-auto"
+            class="shadow-lg border w-full max-h-[calc(100vh-24rem-2rem)] overflow-y-auto"
           />
         </div>
       </template>
@@ -355,4 +370,9 @@ function viewFile(filename, content, parsedContent) {
   @apply -translate-y-12;
   @apply -translate-x-1/2;
 } */
+
+.jse-main .jse-contents {
+  overflow: auto;
+  max-height: calc(100vh - 24rem - 13rem);
+}
 </style>

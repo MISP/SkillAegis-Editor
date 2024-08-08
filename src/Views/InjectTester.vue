@@ -734,7 +734,7 @@ function copyToClipboard(text) {
                         >Creates an array combining all normal Attributes and Object's
                         Attributes</span
                       >
-                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-50 rounded">
                         <button
                           class="btn text-black"
                           @click="
@@ -756,7 +756,7 @@ function copyToClipboard(text) {
                       <span class="ml-1 text-sm italic"
                         >Collect normal Attributes then only keep <code>sha1</code> Attributes</span
                       >
-                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-50 rounded">
                         <button
                           class="btn text-black"
                           @click="
@@ -781,7 +781,7 @@ function copyToClipboard(text) {
                         >Collect all <code>URL</code> Objects and then only keep
                         <code>sha1</code> Attributes</span
                       >
-                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-50 rounded">
                         <button
                           class="btn text-black"
                           @click="
