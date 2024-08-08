@@ -18,7 +18,7 @@ router.getRoutes().forEach((route) => {
         <div class="flex items-center py-2 border-b border-slate-600">
           <div class="">
             <div class="mx-10 flex space-x-4">
-              <NavLink to="/scenarios/index" class="">Scenario List</NavLink>
+              <NavLink to="/scenarios/index" class="">Scenario Index</NavLink>
               <NavLink
                 :to="`/scenarios/overview/${selectedScenarioUUID}`"
                 :title="`${

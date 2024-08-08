@@ -6,7 +6,8 @@ import {
   faClock,
   faCircleExclamation,
   faTriangleExclamation,
-  faCircleCheck
+  faCircleCheck,
+  faClipboard
 } from '@fortawesome/free-solid-svg-icons'
 import JsonEditorVue from 'json-editor-vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -60,6 +61,7 @@ const TEST_GROUP_COLORS = ['cyan', 'amber', 'blue', 'pink', 'violet', 'green']
 const inject_eval = computed(() => JSON.parse(props.inject_evaluation || '{}'))
 const test_error = ref(null)
 const show_doc = ref(false)
+const show_samples = ref(false)
 const showModalTestJQ = ref(false)
 const jq_tester_path = ref('')
 const jq_tester_data = ref('{"Event": {"info": "My Event"}}')
@@ -257,6 +259,20 @@ async function testJqPath() {
   } catch (error) {
     jq_tester_result.value = error
   }
+}
+
+function copyToClipboardFeedback(target, text) {
+  target.classList.add('text-green-700')
+  target.classList.remove('text-black')
+  setTimeout(() => {
+    target.classList.remove('text-green-700')
+    target.classList.add('text-black')
+  }, 1000)
+  copyToClipboard(text)
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text)
 }
 </script>
 
@@ -695,6 +711,92 @@ async function testJqPath() {
                           <span class="font-light ml-2 whitespace-break-spaces">{{ text }}</span>
                         </li>
                       </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </template>
+          </Alert>
+          <Alert variant="info" title="MISP Format JQ samples">
+            <template #message>
+              <div>
+                <div>
+                  <label for="showsamples" class="cursor-pointer select-none">
+                    <input id="showsamples" type="checkbox" v-model="show_samples" class="mr-1" />
+                    Show Samples
+                  </label>
+                </div>
+                <div v-show="show_samples">
+                  <ul class="mt-2">
+                    <li class="mb-3">
+                      <span class="font-semibold">Get all Attributes:</span>
+                      <span class="ml-1 text-sm italic"
+                        >Creates an array combining all normal Attributes and Object's
+                        Attributes</span
+                      >
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                        <button
+                          class="btn text-black"
+                          @click="
+                            copyToClipboardFeedback(
+                              $event.currentTarget,
+                              $event.currentTarget.parentElement.innerText
+                            )
+                          "
+                        >
+                          <FontAwesomeIcon :icon="faClipboard"></FontAwesomeIcon>
+                        </button>
+                        <pre class="inline-block ml-2 select-text">
+[.Event.Object[].Attribute[], .Event.Attribute[]]</pre
+                        >
+                      </div>
+                    </li>
+                    <li class="mb-3">
+                      <span class="font-semibold">Filter by Attribute's type:</span>
+                      <span class="ml-1 text-sm italic"
+                        >Collect normal Attributes then only keep <code>sha1</code> Attributes</span
+                      >
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                        <button
+                          class="btn text-black"
+                          @click="
+                            copyToClipboardFeedback(
+                              $event.currentTarget,
+                              $event.currentTarget.parentElement.innerText
+                            )
+                          "
+                        >
+                          <FontAwesomeIcon :icon="faClipboard"></FontAwesomeIcon>
+                        </button>
+                        <pre class="inline-block ml-2 select-text">
+.Event.Attribute[] | select(.type == \"sha1\")</pre
+                        >
+                      </div>
+                    </li>
+                    <li class="">
+                      <span class="font-semibold"
+                        >Filter by Object's name and Attribute's type:</span
+                      >
+                      <span class="ml-1 text-sm italic"
+                        >Collect all <code>URL</code> Objects and then only keep
+                        <code>sha1</code> Attributes</span
+                      >
+                      <div class="font-mono text-sm text-red-700 px-3 py-2 bg-slate-100 rounded">
+                        <button
+                          class="btn text-black"
+                          @click="
+                            copyToClipboardFeedback(
+                              $event.currentTarget,
+                              $event.currentTarget.parentElement.innerText
+                            )
+                          "
+                        >
+                          <FontAwesomeIcon :icon="faClipboard"></FontAwesomeIcon>
+                        </button>
+                        <pre class="inline-block ml-2 select-text">
+.Event.Object[] | select((.name == \"url\")).Attribute[] | select(.type == \"url\").value</pre
+                        >
+                      </div>
                     </li>
                   </ul>
                 </div>
