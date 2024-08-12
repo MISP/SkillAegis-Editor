@@ -452,7 +452,7 @@ function deleteEvaluation(evaluationIndex) {
               :disabled="!injectMovedPosition"
               @click="revertInjectOrderChanges()"
             >
-              <FontAwesomeIcon :icon="faArrowUpWideShort" class="fa-fw"></FontAwesomeIcon>Rest Order
+              <FontAwesomeIcon :icon="faArrowUpWideShort" class="fa-fw"></FontAwesomeIcon>Reset Order
             </button>
             <button
               :class="`btn btn-success select-none ${
