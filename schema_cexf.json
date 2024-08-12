@@ -20,9 +20,9 @@
                         "level": {
                             "type": "string",
                             "enum": [
-                                "Beginner",
-                                "Advanced",
-                                "Expert"
+                                "beginner",
+                                "advanced",
+                                "expert"
                             ]
                         },
                         "priority": {
