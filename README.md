@@ -1,34 +1,74 @@
-# scenario-designer
+# SkillAegis-Editor
+<img alt="SkillAegis Logo" align="right" src="src/assets/skillaegis-logo.svg"/> 
 
-This template should help get you started developing with Vue 3 in Vite.
+**SkillAegis-Editor** is a platform to design exercise scenarios, enhancing skills in applications like MISP and training users in best practices for information management and protective tools.
 
-## Recommended IDE Setup
+The Editor allows you to create scenarios under the [Common Exercise Format (CEXF)](https://misp.github.io/cexf/) that can be used by other application such as **[SkillAegis Dashboard](https://github.com/MISP/SkillAegis-Dashboard)**.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+> [!NOTE]  
+> Consider running this application with **[SkillAegis](https://github.com/MISP/SkillAegis)** for Production.
 
-## Customize configuration
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+![SkillAegis Editor Scenario Index](./docs/SkillAegis-Editor_index.png)
+*List of all available scenarios*
 
-## Project Setup
+![SkillAegis Editor Scenario Designer](./docs/SkillAegis-Editor_designer.png)
+*While designing a scenario, you can create multiple injects, specify their execution order, outline any requirements for each, and define the criteria for evaluating and marking them as complete.*
+
+![SkillAegis Editor Inject Tester](./docs/SkillAegis-Editor_inject-tester.png)
+*Writing evaluations for injects can be challenging, so the inject tester is provided to streamline this process.*
+
+
+## Installation
+
+To get started with SkillAegis-Editor, follow these steps:
+
+1. Install dependencies
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip3 install -r requirements.txt
+   ```
+2. Clone the configuration file
+    ```bash
+    cp config.py.sample config.py
+    ```
+    - [optional] Update the configuration
+3. Start the application
+   ```bash
+   # Usage: ./start.sh --exercise_folder <folder> [--host <host>] [--port <port>]
+   ./start.sh --exercise_folder scenarios/
+   ```
+
+## Development
+
+### Back-end
+```bash
+source venv/bin/activate
+fastapi dev main.py
+```
+
+### Front-end
+
+#### Project Setup
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+#### Compile and Hot-Reload for Development
 
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+#### Compile and Minify for Production
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+#### Lint with [ESLint](https://eslint.org/)
 
 ```sh
 npm run lint
