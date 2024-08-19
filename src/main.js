@@ -19,6 +19,7 @@ import Alert from '@/components/Alert.vue'
 import Modal from '@/components/Modal.vue'
 import { fetchScenarios } from './api'
 
+document.title = import.meta.env.VITE_APP_TITLE
 
 const routes = [
     { path: '/scenarios/index', name: 'Scenario Index', component: ScenarioList, meta: { requiresScenarioSelection: false }, },
