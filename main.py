@@ -176,7 +176,7 @@ def createScenario(newExercise) -> Union[dict, str]:
     
     scenarios.append(scenario)
     scenarioByUUID[exercise['uuid']] = scenario
-    scenarioFilenameByUUID[exercise['uuid']] = EXERCISE_DIR / filename
+    scenarioFilenameByUUID[exercise['uuid']] = filename
     return scenario
 
 
@@ -212,7 +212,7 @@ def deleteScenario(uuid: str) -> Union[bool, str]:
 
     if uuid in scenarioFilenameByUUID:
         try:
-            os.remove(scenarioFilenameByUUID[uuid])
+            os.remove(EXERCISE_DIR / scenarioFilenameByUUID[uuid])
         except Exception as e:
             print(e)
             return e

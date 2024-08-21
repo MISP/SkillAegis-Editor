@@ -219,7 +219,7 @@ function viewFile(filename, content, parsedContent) {
       :message="error"
     ></Alert>
 
-    <div v-if="scenarios.length > 0">
+    <div>
       <div class="flex">
         <h2 class="text-lg text-slate-700 mb-1">Available Scenarios</h2>
         <div class="ml-auto mb-2 inline-flex flex-row-reverse gap-2">
@@ -253,6 +253,11 @@ function viewFile(filename, content, parsedContent) {
           </tr>
         </thead>
         <tbody>
+          <tr v-if="scenarios.length == 0">
+            <td colspan="7 p-3 text-center">
+              <i class="text-slate-600">No scenarios available</i>
+            </td>
+          </tr>
           <tr
             v-for="scenario in scenarios"
             :key="scenario.exercise.uuid"
