@@ -32,6 +32,7 @@ const hasValidChanges = computed(() => {
     return (
       selectedScenario.value.exercise.name != exercise_name.value ||
       selectedScenario.value.exercise.namespace != exercise_namespace.value ||
+      selectedScenario.value.exercise.description != exercise_description.value ||
       selectedScenario.value.exercise.uuid != exercise_uuid.value ||
       selectedScenario.value.exercise.version != exercise_version.value ||
       JSON.stringify(selectedScenario.value.exercise.meta) != JSON.stringify(parsedMeta.value)
@@ -52,12 +53,13 @@ onDeactivated(() => {
 
 const exercise_name = ref('')
 const exercise_namespace = ref('')
+const exercise_description = ref('')
 const exercise_uuid = ref('')
 const exercise_version = ref('')
 const exercise_meta = ref('{}')
 
 const exercise_meta_author = ref('MISP Project')
-const exercise_meta_level = ref('Beginner')
+const exercise_meta_level = ref('beginner')
 const exercise_meta_priority = ref(10)
 
 watch(
@@ -97,6 +99,7 @@ async function saveScenario() {
   const result = await editScenario({
     name: exercise_name.value,
     namespace: exercise_namespace.value,
+    description: exercise_description.value,
     uuid: exercise_uuid.value,
     version: exercise_version.value,
     meta: parsedMeta.value
@@ -128,6 +131,7 @@ onBeforeUnmount(() => {
 function resetForm() {
   exercise_name.value = ''
   exercise_namespace.value = ''
+  exercise_description.value = ''
   exercise_uuid.value = ''
   exercise_version.value = ''
   exercise_meta.value = {}
@@ -137,6 +141,7 @@ function initForm() {
   if (selectedScenario.value?.exercise) {
     exercise_name.value = selectedScenario.value.exercise.name
     exercise_namespace.value = selectedScenario.value.exercise.namespace
+    exercise_description.value = selectedScenario.value.exercise.description
     exercise_uuid.value = selectedScenario.value.exercise.uuid
     exercise_version.value = selectedScenario.value.exercise.version
     exercise_meta.value = JSON.stringify(selectedScenario.value.exercise.meta, null, 4)
@@ -233,11 +238,11 @@ function initForm() {
                 v-model="exercise_meta_level"
                 class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400 bg-white"
                 id="namespace"
-                placeholder="Beginner"
+                placeholder="beginner"
               >
-                <option value="Beginner">Beginner</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Expert">Expert</option>
+                <option value="beginner">Beginner</option>
+                <option value="advanced">Advanced</option>
+                <option value="expert">Expert</option>
               </select>
             </div>
 
@@ -252,6 +257,19 @@ function initForm() {
                 class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
                 id="uuid"
                 placeholder="10"
+              />
+            </div>
+
+            <div class="grow">
+              <label for="description" class="block text-gray-700 font-bold mb-2"
+                >Scenario Description</label
+              >
+              <input
+                type="text"
+                v-model="exercise_description"
+                class="shadow border w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                id="description"
+                placeholder="A description"
               />
             </div>
           </div>

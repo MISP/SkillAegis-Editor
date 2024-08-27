@@ -144,6 +144,19 @@ def error(title: str, errorMessage: str, payload: dict = {}) -> dict:
     }
 
 
+def marshallInjectFlow(injectF: dict) -> dict:
+    injectF['inject_uuid'] = injectF.get('inject_uuid', '')
+    injectF['description'] = injectF.get('description', '')
+    injectF['requirements'] = injectF.get('requirements', {})
+    if 'inject_uuid' in injectF['requirements'] and (injectF['requirements']['inject_uuid'] is None or len(injectF['requirements']['inject_uuid']) == 0):
+        del injectF['requirements']['inject_uuid']
+    injectF['sequence'] = injectF.get('sequence', {})
+    injectF['sequence']['completion_trigger'] = injectF['sequence'].get('completion_trigger', [])
+    injectF['sequence']['followed_by'] = injectF['sequence'].get('followed_by', [])
+    injectF['sequence']['trigger'] = injectF['sequence'].get('trigger', [])
+    return injectF
+
+
 def createScenario(newExercise) -> Union[dict, str]:
     global scenarios, scenarioByUUID
     today = datetime.date.today()
@@ -193,6 +206,7 @@ def editScenario(updatedScenario) -> Union[dict, str]:
     scenario['exercise']['description'] = updatedScenario.description
     scenario['exercise']['version'] = f"{today.year}{today.month}{today.day}"
     scenario['exercise']['meta'] = updatedScenario.meta
+    scenario['inject_flow'] = [marshallInjectFlow(injectF) for injectF in scenario['inject_flow']]
     filename = scenarioFilenameByUUID[theUUID]
     try:
         with open(EXERCISE_DIR / filename, 'w') as f:
@@ -242,10 +256,10 @@ def saveInject(scenario_uuid: str, injectToSave, injectFlowToSave) -> Union[dict
     injectFlowToSave = injectFlowToSave.dict()
     for i, injectF in enumerate(scenario['inject_flow']):
         if injectF['inject_uuid'] == injectFlowToSave['inject_uuid']:
-            scenario['inject_flow'][i] = injectFlowToSave
+            scenario['inject_flow'][i] = marshallInjectFlow(injectFlowToSave)
             found = True
     if not found:
-        scenario['inject_flow'].append(injectFlowToSave)
+        scenario['inject_flow'].append(marshallInjectFlow(injectFlowToSave))
 
     saveResult = saveScenario(scenario_uuid, scenario)
     return saveResult
