@@ -165,7 +165,8 @@ const hasValidChanges = computed(() => {
       ? JSON.stringify(originalSelectedInjectFlow.requirements, undefined, 4)
       : originalSelectedInjectFlow.requirements
 
-  const injectFlowMetaChanges = requirements_str != orig_requirements_str
+  const injectFlowMetaChanges = sequence_str != orig_sequence_str ||
+    requirements_str != orig_requirements_str
 
   if (metaChanges || injectFlowMetaChanges) {
     return true
