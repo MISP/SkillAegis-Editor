@@ -46,7 +46,7 @@ const props = defineProps({
   },
   labelTextGetter: {
     type: String,
-    default: 'name',
+    default: 'label',
   },
   disabled: Boolean,
   hideSelected: {
@@ -57,6 +57,13 @@ const props = defineProps({
     type: String,
     default: null
   },
+})
+
+const optionsAreObjects = computed(() => {
+    if (props.options.length == 0) {
+        return false
+    }
+    return typeof props.options[0] !== 'string'
 })
 
 const internalValues = computed(() => {
@@ -135,17 +142,19 @@ function addNewTagElement() {
     if (!props.taggable) return
 
     if (filteredOptions.value.length == 0) {
-        select({
-            value: search.value,
-            name: search.value,
-        })
+        let newOption = search.value
+        if (optionsAreObjects.value) {
+            newOption = {value: search.value}
+            newOption[props.labelTextGetter] = search.value
+        }
+        select(newOption)
         search.value = ''
     }
 }
 
 
 function getOptionLabel(option) {
-    return option[props.labelTextGetter]
+    return typeof option === 'string' ? option : option[props.labelTextGetter]
 }
 </script>
 
