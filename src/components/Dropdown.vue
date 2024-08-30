@@ -1,10 +1,23 @@
 <script setup>
-import { computed, ref } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import { faCaretDown, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 const model = defineModel({ required: true })
 const search = ref('')
 const isOpen = ref(false)
+const searchbox = ref()
+const selectbox = ref()
+
+watch(isOpen, async (dropdownOpen) => {
+    if (dropdownOpen) {
+        await nextTick()
+        if (props.searchable) {
+            searchbox.value.focus()
+        } else {
+            selectbox.value.focus()
+        }
+    }
+})
 
 const emit = defineEmits(['open', 'close', 'select'])
 
@@ -53,7 +66,7 @@ const filteredOptions = computed(() => {
     let options = props.options.concat()
 
     options = search.value.length > 0 ? options
-        .filter((option) => getOptionLabel(option).includes(normalizedSearch))
+        .filter((option) => getOptionLabel(option).toLowerCase().includes(normalizedSearch))
         .sort((a, b) => getOptionLabel(a).length - getOptionLabel(b).length) : options
     
     if (props.hideSelected) {
@@ -83,7 +96,6 @@ function activate() {
 function deactivate() {
     if (!isOpen.value) return
     isOpen.value = false
-    search.value = ''
     emit('close', props.id)
 }
 
@@ -99,10 +111,10 @@ function select(option) {
         model.value = model.value.concat([option])
     } else {
         model.value = [option]
+        search.value = ''
+        deactivate()
     }
     emit('select', option, props.id)
-    search.value = ''
-    deactivate()
 }
 
 function removeElement(option) {
@@ -113,9 +125,6 @@ function removeElement(option) {
     })
 }
 
-function updateSearch(newValue) {
-
-}
 
 function getOptionLabel(option) {
     return option[props.labelTextGetter]
@@ -124,7 +133,8 @@ function getOptionLabel(option) {
 
 <template>
     <div
-        :tabindex="props.searchable ? -1 : 0"
+        ref="selectbox"
+        tabindex="0"
         class="
             w-full min-w-60 relative
             shadow rounded cursor-pointer
@@ -134,21 +144,21 @@ function getOptionLabel(option) {
         @mousedown="activate()"
         @focus="activate()"
         @blur="searchable ? false : deactivate()"
-        @keyup.esc="console.log('esc') || deactivate()"
+        @keyup.esc="deactivate()"
     >
-        <div class="py-2 px-1 rounded border focus:border-slate-400">
+        <div class="py-1.5 px-1 rounded border focus:border-slate-400 flex items-center">
             <div name="caret" class="absolute right-2 text-slate-600">
                 <FontAwesomeIcon :icon="faCaretDown" class="fa-fw transition-transform" :class="isOpen ? 'fa-rotate-180' : ''"></FontAwesomeIcon>
             </div>
-            <div class="block">
+            <div class="block min-h-7 content-center">
                 <span
                     v-if="internalValues.length == 0"
                     @mousedown.prevent="toggle"
                     name="placeholder"
-                    class="text-slate-600"
+                    class="text-slate-600 text-"
                 >
                     <slot name="placeholder">
-                    <span class="mx-2">{{ placeholder }}</span>
+                    <span class="mx-2 select-none">{{ placeholder }}</span>
                     </slot>
                 </span>
                 <template v-if="props.multiple">
@@ -177,30 +187,30 @@ function getOptionLabel(option) {
             </div>
         </div>
         <div class="option-container">
-            <input
-                v-if="searchable"
-                v-model="search"
-                type="text"
-                autocomplete="off"
-                :spellcheck="false"
-                :placeholder="props.placeholder"
-                :value="search"
-                @input="updateSearch($event.target.value)"
-                @focus.prevent="activate()"
-                @blur.prevent="deactivate()"
-                @keyup.esc="deactivate()"
-                class="input"
-                :aria-controls="'listbox-'+props.id"
-            />
             <Transition>
                 <div
-                    name="content-wrapper"
-                    v-show="isOpen"
-                    tabindex="-1"
-                    @focus="activate"
-                    @mousedown.prevent
+                name="content-wrapper"
+                v-show="isOpen"
+                tabindex="-1"
+                @focus="activate()"
                 >
-                    <ul class="border" role="listbox" :id="'listbox-'+props.id">
+                <ul class="border shadow-md" role="listbox" :id="'listbox-'+props.id">
+                    <li>
+                            <input
+                                v-if="props.searchable"
+                                ref="searchbox"
+                                v-model="search"
+                                type="text"
+                                autocomplete="off"
+                                :spellcheck="false"
+                                placeholder="Search an option"
+                                @focus.prevent="activate()"
+                                @blur.prevent="deactivate()"
+                                @keyup.esc="deactivate()"
+                                class="w-full px-3 py-2 text-cyan-800 shadow-inner outline-none"
+                                :aria-controls="'listbox-'+props.id"
+                            />
+                        </li>
                         <li
                             v-for="(option, index) of filteredOptions"
                             :key="index"
@@ -221,7 +231,7 @@ function getOptionLabel(option) {
                         </li>
 
                         <li v-show="showNoResults && search">
-                            <span>
+                            <span class="px-3 py-2 inline-block">
                                 No elements found. Consider changing the search query.
                             </span>
                         </li>
@@ -234,7 +244,8 @@ function getOptionLabel(option) {
 
 <style scoped>
 li.disabled {
-    @apply cursor-not-allowed text-slate-800 bg-gray-300;
+    @apply cursor-not-allowed;
+    @apply text-slate-800 bg-gray-300;
 }
 
 .v-enter-active {
