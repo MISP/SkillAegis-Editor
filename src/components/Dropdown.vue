@@ -2,6 +2,23 @@
 import { computed, nextTick, ref, watch } from "vue"
 import { faCaretDown, faTimes } from '@fortawesome/free-solid-svg-icons'
 
+/**
+// Usage example:
+<Dropdown
+v-model="dropdownValue"
+:options="[{label: 'Foo', value: 'foo'}, {label: 'Bar', value: 'bar'}]"
+taggable
+searchable
+multiple
+>
+    <template #option="{option}">
+        <span class="p-2 bg-red-900 text-white">
+            {{ option.label }}
+        </span>
+    </template>
+</Dropdown>
+ */
+
 const model = defineModel({ required: true })
 const search = ref('')
 const isOpen = ref(false)
@@ -23,7 +40,7 @@ const emit = defineEmits(['open', 'close', 'select'])
 
 const props = defineProps({
   options: {
-    type: Array,
+    type: [Array, Object],
     required: true
   },
   multiple: {
@@ -41,7 +58,7 @@ const props = defineProps({
   taggable: {
     type: Boolean,
     validator(value, props) {
-        return value && props.searchable
+        return !value || props.searchable
     }
   },
   labelTextGetter: {
@@ -53,6 +70,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  trackBy: {
+    type: [String, null],
+    default: 'value',
+  },
   id: {
     type: String,
     default: null
@@ -60,10 +81,14 @@ const props = defineProps({
 })
 
 const optionsAreObjects = computed(() => {
-    if (props.options.length == 0) {
+    if (props.options.length == 0 || !Array.isArray(props.options)) {
         return false
     }
     return typeof props.options[0] !== 'string'
+})
+
+const optionsAreFromObject = computed(() => {
+    return typeof props.options === 'object' && !Array.isArray(props.options)
 })
 
 const internalValues = computed(() => {
@@ -72,10 +97,23 @@ const internalValues = computed(() => {
         []
 })
 
+const internalOptions = computed(() => {
+    if (optionsAreFromObject.value) {
+        // Options have the format {key:  value}
+        return Object.keys(props.options).map((k) => {
+            return {
+                value: k,
+                label: props.options[k],
+            }
+        })
+    }
+    return props.options
+})
+
 const filteredOptions = computed(() => {
     const normalizedSearch = (search.value || '').toLowerCase().trim()
 
-    let options = props.options.concat()
+    let options = internalOptions.value.concat()
 
     options = search.value.length > 0 ? options
         .filter((option) => getOptionLabel(option).toLowerCase().includes(normalizedSearch))
@@ -83,7 +121,7 @@ const filteredOptions = computed(() => {
     
     if (props.hideSelected) {
         options = options.filter(
-            (option) => !model.value.map((option) => getOptionLabel(option))
+            (option) => !internalValues.map((option) => getOptionLabel(option))
                 .includes(getOptionLabel(option))
         )
     }
@@ -112,29 +150,55 @@ function deactivate() {
 }
 
 function isOptionSelected(option) {
-    return model.value.filter((selectedOption) => {
-        return JSON.stringify(selectedOption) == JSON.stringify(option)
+    if (optionsAreFromObject.value) {
+        return internalValues.value.filter((selectedOption) => {
+            return selectedOption == option.value
+        }).length > 0
+    }
+
+    return internalValues.value.filter((selectedOption) => {
+        if (typeof selectedOption === 'string') {
+            return selectedOption == option[props.trackBy]
+        } else {
+            return JSON.stringify(selectedOption) == JSON.stringify(option)
+        }
     }).length > 0
+}
+
+function isSelectableOption(option) {
+    return !isOptionSelected(option) && !option.disabled
 }
 
 function select(option) {
     if (isOptionSelected(option)) return
+
+    let selectedOption = option
+    if (optionsAreFromObject.value) {
+        selectedOption = option.value
+    } else if (props.trackBy !== null) {
+        selectedOption = option[props.trackBy]
+    }
+
     if (props.multiple) {
-        model.value = model.value.concat([option])
+        model.value = model.value.concat([selectedOption])
     } else {
-        model.value = [option]
+        model.value = selectedOption
         search.value = ''
         deactivate()
     }
-    emit('select', option, props.id)
+    emit('select', selectedOption, props.id)
 }
 
 function removeElement(option) {
     if (props.disabled) return
     if (option.disabled) return
-    model.value = model.value.filter((selectedOption) => {
-        return JSON.stringify(selectedOption) != JSON.stringify(option)
-    })
+    if (props.multiple) {
+        model.value = model.value.filter((selectedOption) => {
+            return JSON.stringify(selectedOption) != JSON.stringify(option)
+        })
+    } else {
+        model.value = null
+    }
 }
 
 function addNewTagElement() {
@@ -152,8 +216,18 @@ function addNewTagElement() {
     }
 }
 
+function getFullOptionFromValue(value) {
+    const filtered = internalOptions.value.filter((option) => option[props.trackBy] == value)
+    return filtered.length > 0 ? filtered[0] : null
+}
 
 function getOptionLabel(option) {
+    if (optionsAreFromObject.value) {
+        return typeof option === 'string' ? props.options[option] : props.options[option.value]
+    }
+    if (typeof option === 'string' && props.trackBy !== null) {
+        return getFullOptionFromValue(option)[props.labelTextGetter]
+    }
     return typeof option === 'string' ? option : option[props.labelTextGetter]
 }
 </script>
@@ -173,16 +247,16 @@ function getOptionLabel(option) {
         @blur="searchable ? false : deactivate()"
         @keyup.esc="deactivate()"
     >
-        <div class="py-1.5 px-1 rounded border focus:border-slate-400 flex items-center">
+        <div class="py-1.5 pl-1 pr-7 rounded border focus:border-slate-400 flex items-center">
             <div name="caret" class="absolute right-2 text-slate-600">
                 <FontAwesomeIcon :icon="faCaretDown" class="fa-fw transition-transform" :class="isOpen ? 'fa-rotate-180' : ''"></FontAwesomeIcon>
             </div>
-            <div class="block min-h-7 content-center">
+            <div class="flex min-h-7 content-center">
                 <span
                     v-if="internalValues.length == 0"
                     @mousedown.prevent="toggle"
                     name="placeholder"
-                    class="text-slate-600 text-"
+                    class="text-slate-600 inline-block content-center"
                 >
                     <slot name="placeholder">
                     <span class="mx-2 select-none">{{ placeholder }}</span>
@@ -191,8 +265,10 @@ function getOptionLabel(option) {
                 <template v-if="props.multiple">
                     <template v-for="(value, index) of internalValues">
                         <slot name="tag" :option="value" :search="search" :remove="removeElement">
-                            <span class="rounded-lg shadow bg-[#22d3ee] px-2 py-1 text-black text-sm font-semibold ml-2 select-none inline-block" :key="index">
-                                <span v-text="getOptionLabel(value)"></span>
+                            <span class="text-nowrap rounded-lg shadow bg-[#22d3ee] px-2 py-1 text-black text-sm font-semibold ml-2 select-none inline-block" :key="index">
+                                <slot name="tag_text" :option="value" :search="search" :textGetter="getOptionLabel">
+                                    <span v-text="getOptionLabel(value)"></span>
+                                </slot>
                                 <i
                                     tabindex="1"
                                     @keypress.enter.prevent="removeElement(value)"
@@ -213,7 +289,7 @@ function getOptionLabel(option) {
                 </template>
             </div>
         </div>
-        <div class="option-container">
+        <div name="option-container" class="absolute w-full z-50">
             <Transition>
                 <div
                 name="content-wrapper"
@@ -243,16 +319,20 @@ function getOptionLabel(option) {
                             v-for="(option, index) of filteredOptions"
                             :key="index"
                             class="px-3 py-2 first:pt-2 odd:bg-slate-50 even:bg-slate-100 hover:bg-[#22d3ee] cursor-pointer"
-                            :class="isOptionSelected(option) ? 'disabled' : ''"
+                            :class="{
+                                'disabled': !isSelectableOption(option),
+                                'selected': isOptionSelected(option),
+                            }"
                             :id="props.id + '-' + index"
                             @click.stop="select(option)"
                             role="option"
+                            :title="isSelectableOption(option) ? '' : (isOptionSelected(option) ? 'Option is already selected' : 'Option is disabled')"
                         >
                             <span
                                 v-if="option"
                                 class="option"
                             >
-                                <slot name="option" :option="option" :search="search" :index="index">
+                                <slot name="option" :option="optionsAreFromObject ? option.value : option" :search="search" :textGetter="getOptionLabel" :index="index">
                                     <span>{{ getOptionLabel(option) }}</span>
                                 </slot>
                             </span>
@@ -260,7 +340,7 @@ function getOptionLabel(option) {
 
                         <li v-show="showNoResults && search" class="bg-slate-50">
                             <span class="inline-block m-1 px-2 py-1 rounded bg-amber-500 text-black">
-                                No elements found.
+                                <span :class="!props.taggable ? 'font-bold' : ''">No elements found.</span>
                                 <span v-if="!props.taggable">
                                     Consider changing the search query.
                                 </span>
@@ -278,8 +358,10 @@ function getOptionLabel(option) {
 
 <style scoped>
 li.disabled {
-    @apply cursor-not-allowed;
-    @apply text-slate-800 bg-gray-300;
+    @apply cursor-not-allowed text-gray-500 bg-gray-300;
+}
+li.disabled.selected {
+    @apply text-slate-800 bg-cyan-200;
 }
 
 .v-enter-active {
