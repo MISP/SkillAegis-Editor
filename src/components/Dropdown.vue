@@ -38,7 +38,12 @@ const props = defineProps({
     type: String,
     default: 'Select an option'
   },
-  taggable: Boolean,
+  taggable: {
+    type: Boolean,
+    validator(value, props) {
+        return value && props.searchable
+    }
+  },
   labelTextGetter: {
     type: String,
     default: 'name',
@@ -125,6 +130,19 @@ function removeElement(option) {
     })
 }
 
+function addNewTagElement() {
+    if (props.disabled) return
+    if (!props.taggable) return
+
+    if (filteredOptions.value.length == 0) {
+        select({
+            value: search.value,
+            name: search.value,
+        })
+        search.value = ''
+    }
+}
+
 
 function getOptionLabel(option) {
     return option[props.labelTextGetter]
@@ -207,7 +225,8 @@ function getOptionLabel(option) {
                                 @focus.prevent="activate()"
                                 @blur.prevent="deactivate()"
                                 @keyup.esc="deactivate()"
-                                class="w-full px-3 py-2 text-cyan-800 shadow-inner outline-none"
+                                @keypress.enter.prevent.stop.self="addNewTagElement()"
+                                class="w-full px-3 py-2 text-cyan-800 shadow-inner border-b border-gray-200 outline-none"
                                 :aria-controls="'listbox-'+props.id"
                             />
                         </li>
@@ -230,9 +249,15 @@ function getOptionLabel(option) {
                             </span>
                         </li>
 
-                        <li v-show="showNoResults && search">
-                            <span class="px-3 py-2 inline-block">
-                                No elements found. Consider changing the search query.
+                        <li v-show="showNoResults && search" class="bg-slate-50">
+                            <span class="inline-block m-1 px-2 py-1 rounded bg-amber-500 text-black">
+                                No elements found.
+                                <span v-if="!props.taggable">
+                                    Consider changing the search query.
+                                </span>
+                            </span>
+                            <span v-if="props.taggable" class="inline-block m-1 px-2 py-1 ml-1 rounded bg-blue-700 text-white text-center">
+                                Press <code class="inline align-middle text-xs rounded-sm bg-white text-red-900 px-1 py-0.5 mx-1">&lt;enter&gt;</code> to create a new option.
                             </span>
                         </li>
                     </ul>
