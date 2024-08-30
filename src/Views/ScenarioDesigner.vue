@@ -655,44 +655,39 @@ function deleteEvaluation(evaluationIndex) {
               <div class="flex flex-row gap-6">
                 <div class="basis-1/3">
                   <label for="name" class="block text-gray-700 font-bold mb-1">Triggers</label>
-                  <select
+                  <Dropdown
                     v-model="selectedInjectFlow.sequence.trigger"
-                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
-                    id="target_tool"
-                    placeholder="MISP"
+                    :options="ALLOWED_TRIGGERS"
+                    searchable
                     multiple
+                    placeholder="- No trigger -"
                   >
-                    <option value="null">- No trigger -</option>
-                    <option
-                      v-for="(trigger_info, trigger) in ALLOWED_TRIGGERS"
-                      :key="trigger"
-                      :value="trigger"
-                      :title="trigger_info"
-                    >
-                      {{ trigger }}
-                    </option>
-                  </select>
+                  <template #tag_text="{option, textGetter}">
+                    <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 mr-1">[{{ option }}]</span> {{ textGetter(option) }}
+                  </template>
+                  <template #option="{option, textGetter}">
+                    <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 border mr-1">[{{ option }}]</span> {{ textGetter(option) }}
+                  </template>
+                  </Dropdown>
                 </div>
                 <div class="basis-2/3">
                   <label for="requirement" class="block text-gray-700 font-bold mb-1"
                     >Inject Completion Requirement</label
                   >
-                  <select
-                    v-model="selectedInjectFlow.requirements.inject_uuid"
-                    class="shadow border w-full rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:border-slate-400 bg-white"
+                  <Dropdown
                     id="requirement"
-                  >
-                    <option :value="null">- No requirements -</option>
-                    <option
-                      v-for="inject in injectByUUID"
-                      :key="inject.uuid"
-                      :value="inject.uuid"
-                      :title="inject.uuid"
-                      :disabled="inject.uuid == selectedInject.uuid"
-                    >
-                      {{ inject.name }}
-                    </option>
-                  </select>
+                    v-model="selectedInjectFlow.requirements.inject_uuid"
+                    :options="Object.values(injectByUUID).map((inject) => {
+                      return {
+                        value: inject.uuid,
+                        label: inject.name,
+                        disabled: inject.uuid == selectedInject.uuid
+                      }
+                    })"
+                    trackBy="value"
+                    searchable
+                    placeholder="- No requirements -"
+                  ></Dropdown>
                 </div>
               </div>
             </div>

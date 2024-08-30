@@ -17,6 +17,7 @@ import App from './App.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import Alert from '@/components/Alert.vue'
 import Modal from '@/components/Modal.vue'
+import Dropdown from '@/components/Dropdown.vue'
 import { fetchScenarios } from './api'
 
 document.title = import.meta.env.VITE_APP_TITLE
@@ -79,5 +80,6 @@ const app = createApp(App)
 app.component('FontAwesomeIcon', FontAwesomeIcon)
 app.component('Alert', Alert)
 app.component('Modal', Modal)
+app.component('Dropdown', Dropdown)
 app.use(router)
 app.mount('#app')
