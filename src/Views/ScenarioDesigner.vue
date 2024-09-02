@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { Sortable } from 'sortablejs-vue3'
+import PeriodicRate from '@/Views/scenario-designer/PeriodicRate.vue'
 import {
   addNewInjectToSelectedScenario,
   removeInjectFromSelectedScenario,
@@ -23,7 +24,8 @@ import {
   faSave,
   faScrewdriverWrench,
   faTimes,
-  faTrash
+  faTrash,
+  faStopwatch
 } from '@fortawesome/free-solid-svg-icons'
 import {
   ref,
@@ -49,25 +51,16 @@ const ALLOWED_STRATEGIES = {
   query_search: 'Perform a search query on MISP and compare the returned result'
 }
 const ALLOWED_TRIGGERS = {
-  startex: 'Start of the exercise'
+  startex: 'Start of the exercise',
+  periodic: 'Periodically runs based on the timing function',
 }
 const ALLOWED_TARGET_TOOLS = {
-  MISP: 'MISP'
+  MISP: 'MISP',
+  suricata: 'Suricata',
 }
 
 const route = useRoute()
 const router = useRouter()
-
-/* Have to cheat there to avoid having the editor unmount itself before the animation finishes and avoid gutter bug where editor is not displayed correctly */
-// onActivated(() => {
-//   showEditor.value = true
-// })
-// onDeactivated(() => {
-//   setTimeout(() => {
-//     showEditor.value = false
-//   }, 250)
-//   resetState()
-// })
 
 onBeforeUnmount(() => {
   resetState()
@@ -92,6 +85,9 @@ onBeforeRouteLeave(async (to, from) => {
 })
 
 const showEditor = ref(true)
+const showTimingSettings = computed(() => {
+  return selectedInjectFlow.value.sequence.trigger.includes('periodic')
+})
 const canBeSaved = computed(() => {
   return hasValidChanges.value
 })
@@ -156,6 +152,15 @@ const hasValidChanges = computed(() => {
       ? JSON.stringify(originalSelectedInjectFlow.sequence, undefined, 4)
       : originalSelectedInjectFlow.sequence
 
+  let timing_str =
+    typeof selectedInjectFlow.value.timing === 'object'
+      ? JSON.stringify(selectedInjectFlow.value.timing, undefined, 4)
+      : selectedInjectFlow.value.timing
+  let orig_timing_str =
+    typeof originalSelectedInjectFlow.timing === 'object'
+      ? JSON.stringify(originalSelectedInjectFlow.timing, undefined, 4)
+      : originalSelectedInjectFlow.timing
+
   let requirements_str =
     typeof selectedInjectFlow.value.requirements === 'object'
       ? JSON.stringify(selectedInjectFlow.value.requirements, undefined, 4)
@@ -166,6 +171,7 @@ const hasValidChanges = computed(() => {
       : originalSelectedInjectFlow.requirements
 
   const injectFlowMetaChanges = sequence_str != orig_sequence_str ||
+    timing_str != orig_timing_str ||
     requirements_str != orig_requirements_str
 
   if (metaChanges || injectFlowMetaChanges) {
@@ -266,6 +272,10 @@ const emptyInjectFlow = {
   sequence: {
     followed_by: [],
     trigger: []
+  },
+  timing: {
+    triggered_at: null,
+    periodic_run_every: null,
   }
 }
 const emptyInjectEvaluation = {
@@ -663,12 +673,12 @@ function deleteEvaluation(evaluationIndex) {
                     multiple
                     placeholder="- No trigger -"
                   >
-                  <template #tag_text="{option, textGetter}">
-                    <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 mr-1">[{{ option }}]</span> {{ textGetter(option) }}
-                  </template>
-                  <template #option="{option, textGetter}">
-                    <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 border mr-1">[{{ option }}]</span> {{ textGetter(option) }}
-                  </template>
+                    <template #tag_text="{option, textGetter}">
+                      <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 mr-1">[{{ option }}]</span> {{ textGetter(option) }}
+                    </template>
+                    <template #option="{option, textGetter}">
+                      <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 border mr-1">[{{ option }}]</span> {{ textGetter(option) }}
+                    </template>
                   </Dropdown>
                 </div>
                 <div class="basis-2/3">
@@ -689,6 +699,30 @@ function deleteEvaluation(evaluationIndex) {
                     searchable
                     placeholder="- No requirements -"
                   ></Dropdown>
+                </div>
+              </div>
+
+              <div class="flex flex-row gap-6">
+                <div 
+                  v-if="showTimingSettings"
+                  class="flex-grow ml-3 p-2 rounded shadow-md border border-slate-200 bg-slate-100"
+                >
+                  <label class="block text-gray-700 font-bold mb-1">
+                    <FontAwesomeIcon :icon="faStopwatch" class="fa-fw"></FontAwesomeIcon>
+                    Timing Function
+                  </label
+                  >
+                  <div class="flex flex-col gap-1">
+                    <div class="">
+                      <span class="select-none p-1">
+                        <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-white mr-1 border-gray-300 border">[periodic]</span>
+                        Rate
+                      </span>
+                      <span class="p-1">
+                        <PeriodicRate v-model="selectedInjectFlow.timing.periodic_run_every"></PeriodicRate>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -154,6 +154,9 @@ def marshallInjectFlow(injectF: dict) -> dict:
     injectF['sequence']['completion_trigger'] = injectF['sequence'].get('completion_trigger', [])
     injectF['sequence']['followed_by'] = injectF['sequence'].get('followed_by', [])
     injectF['sequence']['trigger'] = injectF['sequence'].get('trigger', [])
+    injectF['timing'] = injectF.get('timing', {})
+    injectF['timing']['triggered_at'] = injectF['timing'].get('triggered_at', None)
+    injectF['timing']['periodic_run_every'] = injectF['timing'].get('periodic_run_every', None)
     return injectF
 
 
@@ -440,6 +443,7 @@ class InjectFlow(BaseModel):
     description: str | None = None
     requirements: dict | None = None
     sequence: dict | None = None
+    timing: dict | None = None
 
 
 class InjectOrder(BaseModel):
