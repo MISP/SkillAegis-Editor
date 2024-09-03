@@ -251,7 +251,7 @@ function getOptionLabel(option) {
             <div name="caret" class="absolute right-2 text-slate-600">
                 <FontAwesomeIcon :icon="faCaretDown" class="fa-fw transition-transform" :class="isOpen ? 'fa-rotate-180' : ''"></FontAwesomeIcon>
             </div>
-            <div class="flex min-h-7 content-center">
+            <div class="flex min-h-7 content-center flex-wrap gap-1">
                 <span
                     v-if="internalValues.length == 0"
                     @mousedown.prevent="toggle"
