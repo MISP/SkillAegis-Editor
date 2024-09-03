@@ -45,14 +45,20 @@ const props = defineProps({
   uuid: String
 })
 
-const ALLOWED_STRATEGIES = {
-  data_filtering: 'Filter Event data',
-  query_mirror: 'Perform the same query against MISP',
-  query_search: 'Perform a search query on MISP and compare the returned result'
+const ALLOWED_STRATEGIES_FOR_TOOLS = {
+  'MISP': {
+    data_filtering: 'Filter Event data',
+    query_mirror: 'Perform the same query against MISP',
+    query_search: 'Perform a search query on MISP and compare the returned result',
+  },
+  'suricata': {
+    basic: 'Basic strategy - Currently undefined'
+  }
 }
 const ALLOWED_TRIGGERS = {
   startex: 'Start of the exercise',
   periodic: 'Periodically runs based on the timing function',
+  triggered_at: 'Runs once based on the timing function',
 }
 const ALLOWED_TARGET_TOOLS = {
   MISP: 'MISP',
@@ -86,7 +92,13 @@ onBeforeRouteLeave(async (to, from) => {
 
 const showEditor = ref(true)
 const showTimingSettings = computed(() => {
+  return showTimingSettingsPeriodic.value || showTimingSettingsTriggeredAt.value
+})
+const showTimingSettingsPeriodic = computed(() => {
   return selectedInjectFlow.value.sequence.trigger.includes('periodic')
+})
+const showTimingSettingsTriggeredAt = computed(() => {
+  return selectedInjectFlow.value.sequence.trigger.includes('triggered_at')
 })
 const canBeSaved = computed(() => {
   return hasValidChanges.value
@@ -278,12 +290,16 @@ const emptyInjectFlow = {
     periodic_run_every: null,
   }
 }
-const emptyInjectEvaluation = {
-  parameters: [],
-  result: '',
-  evaluation_strategy: 'data_filtering',
-  evaluation_context: {},
-  score_range: [0, 20]
+
+function getEmptyInjectEvaluation() {
+  const emptyInjectEvaluation = {
+    parameters: [],
+    result: '',
+    evaluation_strategy: Object.keys(ALLOWED_STRATEGIES_FOR_TOOLS[selectedInject.value.target_tool])[0],
+    evaluation_context: {},
+    score_range: [0, 20]
+  }
+  return emptyInjectEvaluation
 }
 
 const injectByUUID = computed(() => {
@@ -429,7 +445,7 @@ async function deleteInject(inject_uuid) {
 }
 
 function createNewInjectEval() {
-  const newInjectEvaluation = JSON.parse(JSON.stringify(emptyInjectEvaluation))
+  const newInjectEvaluation = getEmptyInjectEvaluation()
   selectedInject.value.inject_evaluation.push(newInjectEvaluation)
 }
 
@@ -672,6 +688,7 @@ function deleteEvaluation(evaluationIndex) {
                     searchable
                     multiple
                     placeholder="- No trigger -"
+                    class="max-w-2xl"
                   >
                     <template #tag_text="{option, textGetter}">
                       <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-gray-50 mr-1">[{{ option }}]</span> {{ textGetter(option) }}
@@ -709,11 +726,21 @@ function deleteEvaluation(evaluationIndex) {
                 >
                   <label class="block text-gray-700 font-bold mb-1">
                     <FontAwesomeIcon :icon="faStopwatch" class="fa-fw"></FontAwesomeIcon>
-                    Timing Function
+                    Timing Function{{ showTimingSettingsTriggeredAt && showTimingSettingsPeriodic ? 's' : ''}}
                   </label
                   >
                   <div class="flex flex-col gap-1">
-                    <div class="">
+                    <div v-show="showTimingSettingsTriggeredAt">
+                      <span class="select-none p-1">
+                        <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-white mr-1 border-gray-300 border">[triggered_at]</span>
+                        Triggers
+                      </span>
+                      <span class="p-1">
+                        <PeriodicRate v-model="selectedInjectFlow.timing.triggered_at"></PeriodicRate>
+                      </span>
+                        after exercise start.
+                    </div>
+                    <div v-show="showTimingSettingsPeriodic">
                       <span class="select-none p-1">
                         <span class="text-red-700 font-mono py-0.5 px-1 rounded-sm bg-white mr-1 border-gray-300 border">[periodic]</span>
                         Rate
@@ -771,7 +798,7 @@ function deleteEvaluation(evaluationIndex) {
                             placeholder="Evaluation Strategy"
                           >
                             <option
-                              v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES"
+                              v-for="(strategy_info, strategy) in ALLOWED_STRATEGIES_FOR_TOOLS[selectedInject.target_tool]"
                               :key="strategy"
                               :value="strategy"
                               :title="strategy_info"
