@@ -238,7 +238,7 @@ function getOptionLabel(option) {
         tabindex="0"
         class="
             w-full min-w-60 relative
-            shadow rounded cursor-pointer
+            shadow rounded
             bg-slate-50 text-gray-700 leading-tight focus:outline-none
         "
         role="combobox"
@@ -247,7 +247,7 @@ function getOptionLabel(option) {
         @blur="searchable ? false : deactivate()"
         @keyup.esc="deactivate()"
     >
-        <div class="py-1.5 pl-1 pr-7 rounded border focus:border-slate-400 flex items-center">
+        <div class="py-1.5 pl-1 pr-7 rounded border focus:border-slate-400 flex items-center cursor-pointer">
             <div name="caret" class="absolute right-2 text-slate-600">
                 <FontAwesomeIcon :icon="faCaretDown" class="fa-fw transition-transform" :class="isOpen ? 'fa-rotate-180' : ''"></FontAwesomeIcon>
             </div>
@@ -288,6 +288,15 @@ function getOptionLabel(option) {
                     </slot>
                 </template>
             </div>
+            <i
+                v-if="!props.multiple && internalValues.length > 0"
+                class="ml-auto mr-1"
+                tabindex="1"
+                @keypress.enter.prevent="removeElement(internalValues[0])"
+                @mousedown.stop="removeElement(internalValues[0])"
+            >
+                <FontAwesomeIcon :icon="faTimes" class=" ml-2 text-sm text-gray-500 hover:text-gray-800 cursor-pointer"></FontAwesomeIcon>
+            </i>
         </div>
         <div name="option-container" class="absolute w-full z-50">
             <Transition>
@@ -318,7 +327,7 @@ function getOptionLabel(option) {
                         <li
                             v-for="(option, index) of filteredOptions"
                             :key="index"
-                            class="px-3 py-2 first:pt-2 odd:bg-slate-50 even:bg-slate-100 hover:bg-[#22d3ee] cursor-pointer"
+                            class="px-3 py-2 first:pt-2 bg-slate-50 hover:bg-slate-200 cursor-pointer"
                             :class="{
                                 'disabled': !isSelectableOption(option),
                                 'selected': isOptionSelected(option),
@@ -330,7 +339,7 @@ function getOptionLabel(option) {
                         >
                             <span
                                 v-if="option"
-                                class="option"
+                                name="option"
                             >
                                 <slot name="option" :option="optionsAreFromObject ? option.value : option" :search="search" :textGetter="getOptionLabel" :index="index">
                                     <span>{{ getOptionLabel(option) }}</span>
@@ -339,9 +348,9 @@ function getOptionLabel(option) {
                         </li>
 
                         <li v-show="showNoResults && search" class="bg-slate-50">
-                            <span class="inline-block m-1 px-2 py-1 rounded bg-amber-500 text-black">
-                                <span :class="!props.taggable ? 'font-bold' : ''">No elements found.</span>
-                                <span v-if="!props.taggable">
+                            <span class="inline-block m-1 px-2 py-1 rounded text-gray-600 font-light">
+                                <span :class="!props.taggable ? '' : ''">No elements found.</span>
+                                <span v-if="!props.taggable" class="font-thin">
                                     Consider changing the search query.
                                 </span>
                             </span>
@@ -358,10 +367,10 @@ function getOptionLabel(option) {
 
 <style scoped>
 li.disabled {
-    @apply cursor-not-allowed text-gray-500 bg-gray-300;
+    @apply cursor-not-allowed text-gray-400 pointer-events-none;
 }
 li.disabled.selected {
-    @apply text-slate-800 bg-cyan-200;
+    @apply text-slate-800 font-bold;
 }
 
 .v-enter-active {

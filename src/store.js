@@ -49,4 +49,12 @@ export function updateInjectToSelectedScenario(injectToUpdate, injectFlowToUpdat
 export function removeInjectFromSelectedScenario(inject_uuid) {
     scenarioByUUID.value[store.selected_scenario].injects = scenarioByUUID.value[store.selected_scenario].injects.filter((inj) => inj.uuid != inject_uuid)
     scenarioByUUID.value[store.selected_scenario].inject_flow = scenarioByUUID.value[store.selected_scenario].inject_flow.filter((inj) => inj.inject_uuid != inject_uuid)
+
+    // Remove any inject requirements that existed for that inject
+    for (let i = 0; i < scenarioByUUID.value[store.selected_scenario].inject_flow.length; i++) {
+        const injectF = scenarioByUUID.value[store.selected_scenario].inject_flow[i];
+        if (injectF?.requirements?.inject_uuid == inject_uuid) {
+            injectF.requirements = {}
+        }
+    }
 }

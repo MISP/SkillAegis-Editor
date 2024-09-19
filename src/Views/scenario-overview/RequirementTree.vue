@@ -44,7 +44,11 @@ const dependencies = computed(() => {
       injF.requirements.inject_uuid !== null &&
       injF.requirements.inject_uuid.length > 0
     ) {
-      requirements[injF.requirements.inject_uuid].push(injF.inject_uuid)
+      if (requirements[injF.requirements.inject_uuid] === undefined) {
+        console.warn(`Inject flow ${injF.inject_uuid} required requirement ${injF.requirements.inject_uuid} but this inject doesn't exist.`)
+      } else {
+        requirements[injF.requirements.inject_uuid].push(injF.inject_uuid)
+      }
     }
   })
   return requirements

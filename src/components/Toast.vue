@@ -28,6 +28,9 @@ const props = defineProps({
   confirmCb: Function
 })
 
+const isHovered = ref(false)
+let timeoutID = null
+
 const duration = 7000
 
 const icon = computed(() => {
@@ -61,15 +64,32 @@ function callConfirmCb() {
   close()
 }
 
-onMounted(() => {
-  setTimeout(() => {
+function removeIfNotHovered() {
+  if (isHovered.value) {
+    scheduleRemoval()
+  } else {
     removeToast(props.id)
+  }
+}
+
+function scheduleRemoval() {
+  clearTimeout(timeoutID)
+  timeoutID = setTimeout(() => {
+    removeIfNotHovered()
   }, duration)
+}
+
+onMounted(() => {
+  scheduleRemoval()
 })
 </script>
 
 <template>
-  <div :class="`flex flex-col min-w-72 py-2 px-3 rounded bg-${variantClass}-100`">
+  <div
+    @mouseover="isHovered = true"
+    @mouseleave="isHovered = false"
+    :class="`flex flex-col min-w-72 py-2 px-3 rounded bg-${variantClass}-200`"
+  >
     <div :class="`text-${variantClass}-800 flex items-center`">
       <FontAwesomeIcon :icon="icon" class="mr-2"></FontAwesomeIcon>
       <span class="font-semibold">{{ props.title }}</span>

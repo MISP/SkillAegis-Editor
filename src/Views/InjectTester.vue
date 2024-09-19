@@ -399,7 +399,7 @@ function copyToClipboard(text) {
               <div class="min-w-60">
                 <input
                   type="text"
-                  v-model="query_mirror_url"
+                  v-model="query_search_url"
                   class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
                   placeholder="Data created"
                 />
@@ -410,7 +410,7 @@ function copyToClipboard(text) {
               <div class="min-w-60">
                 <input
                   type="text"
-                  v-model="query_mirror_method"
+                  v-model="query_search_method"
                   class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
                   placeholder="Data created"
                 />

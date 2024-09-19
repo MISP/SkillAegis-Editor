@@ -303,6 +303,9 @@ def removeInject(scenario_uuid: str, inject_uuid: str) -> Union[bool, str]:
             scenario['injects'].pop(i)
     
     for i, injectF in enumerate(scenario['inject_flow']):
+        if injectF['requirements'].get('inject_uuid', None) == inject_uuid:
+            scenario['inject_flow'][i]['requirements'] = {}
+
         if injectF['inject_uuid'] == inject_uuid:
             scenario['inject_flow'].pop(i)
 
@@ -436,6 +439,7 @@ class Inject(BaseModel):
     uuid: str | None = None
     description: str | None = None
     inject_evaluation: list | None = []
+    inject_evaluation_join_type: str | None = None
 
 
 class InjectFlow(BaseModel):

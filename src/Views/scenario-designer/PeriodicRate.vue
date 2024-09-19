@@ -52,11 +52,11 @@ function transformTimeToSeconds() {
             min="0"
             max="9999"
             v-model="amount"
-            class="shadow border font-mono w-full rounded-l py-2 px-3 max-w-20 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+            class="shadow border font-mono w-full rounded-l py-1 px-2 max-w-20 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
         />
         <select
             v-model="time_unit"
-            class="shadow border font-mono w-full rounded-r py-2 px-3 text-gray-700 bg-white leading-tight focus:outline-none focus:border focus:border-slate-400"
+            class="shadow border font-mono w-full rounded-r py-1 px-2 text-gray-700 bg-white leading-tight focus:outline-none focus:border focus:border-slate-400"
         >
             <option v-for="(unit) in ALLOWED_TIME_UNIT" :key="unit">{{ unit }}</option>
         </select>
