@@ -242,7 +242,8 @@
                                     "enum": [
                                         "data_filtering",
                                         "query_mirror",
-                                        "query_search"
+                                        "query_search",
+                                        "simulate_ips"
                                     ]
                                 },
                                 "evaluation_context": {

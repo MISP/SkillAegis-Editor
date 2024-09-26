@@ -50,7 +50,7 @@ const ALLOWED_STRATEGIES_FOR_TOOLS = {
     query_search: 'Perform a search query on MISP and compare the returned result',
   },
   'suricata': {
-    alert: 'Alert strategy - Validate if an alert was raised'
+    simulate_ips: 'Simulate IPS strategy - Validate if an alert was raised'
   }
 }
 const ALLOWED_TRIGGERS = {
@@ -122,7 +122,7 @@ const getFormErrors = computed(() => {
   if (
     selectedInject.value.name === undefined ||
     selectedInject.value.name === null ||
-    selectedInject.value.name.length < 3
+    selectedInject.value.name.length < 2
   ) {
     errors.push('selectedInject.name')
   }
