@@ -23,6 +23,10 @@ The Editor allows you to create scenarios under the [Common Exercise Format (CEX
 
 To get started with SkillAegis-Editor, follow these steps:
 
+0. Ensure Python **3.10** or higher is installed.
+    ```bash
+    python -V
+    ```
 1. Install dependencies
    ```bash
    python3 -m venv venv
