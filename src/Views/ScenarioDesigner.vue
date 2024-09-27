@@ -202,13 +202,20 @@ const hasValidChanges = computed(() => {
     const inject_eval = selectedInject.value.inject_evaluation[i]
     const orig_inject_eval = originalSelectedInject.inject_evaluation[i]
 
+    if (inject_eval.score_range[1] != orig_inject_eval.score_range[1]) {
+      return true
+    }
+    if (inject_eval.evaluation_strategy != orig_inject_eval.evaluation_strategy) {
+      return true
+    }
+    if (inject_eval.result != orig_inject_eval.result) {
+      return true
+    }
+
     /* evaluation_context */
     try {
       if (typeof inject_eval.evaluation_context === 'string') {
         JSON.parse(inject_eval.evaluation_context)
-      }
-      if (typeof inject_eval.parameters === 'string') {
-        JSON.parse(inject_eval.parameters)
       }
     } catch (error) {
       return false
@@ -227,11 +234,8 @@ const hasValidChanges = computed(() => {
       return true
     }
 
-    /* evaluation_context */
+    /* evaluation_parameters */
     try {
-      if (typeof inject_eval.evaluation_context === 'string') {
-        JSON.parse(inject_eval.evaluation_context)
-      }
       if (typeof inject_eval.parameters === 'string') {
         JSON.parse(inject_eval.parameters)
       }
