@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import sys
 from typing import Any, Dict, Union
 from pathlib import Path
 import json
@@ -64,19 +65,25 @@ def register_exception(app: FastAPI):
 
 def loadInjectEvaluator():
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    subdir = "/tools/SkillAegis-Dashboard/inject_evaluator.py"
-    spec = importlib.util.spec_from_file_location("inject_evaluator", current_dir + subdir)
+    subdir = "/tools/SkillAegis-Dashboard/backend/target_tools/misp/inject_eval.py"
+    spec = importlib.util.spec_from_file_location("inject_eval", current_dir + subdir)
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["inject_evaluator"] = mod
+    sys.modules["inject_eval"] = mod
+    # Include backend to allow import from other files
+    backend_path = os.path.abspath(os.path.join(os.path.dirname(current_dir + subdir), '../../..'))
+    sys.path.insert(0, backend_path)
     spec.loader.exec_module(mod)
     return mod
 
 
 def loadExerciseModel():
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    subdir = "/tools/SkillAegis-Dashboard/exercise.py"
+    subdir = "/tools/SkillAegis-Dashboard/backend/target_tools/misp/exercise.py"
     spec = importlib.util.spec_from_file_location("exercise", current_dir + subdir)
     mod = importlib.util.module_from_spec(spec)
+    # Include backend to allow import from other files
+    backend_path = os.path.abspath(os.path.join(os.path.dirname(current_dir + subdir), '../../..'))
+    sys.path.insert(0, backend_path)
     sys.modules["exercise"] = mod
     spec.loader.exec_module(mod)
     return mod

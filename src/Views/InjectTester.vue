@@ -37,9 +37,10 @@ const COMPARISION_OPERATOR_PER_TYPE = {
       'count the length of the string and compare against the provided value.\n Accepted values are `[number]` or `[operator][number]`. Examples: 12, >3, <=2.'
   },
   list: {
-    contains: 'All values defined must be present in the data.',
+    contains: 'All values defined must be present at least once in the data.',
     equals: 'All values defined must exactly be present in the data.',
-    'contains-regex': 'All regexes defined must exactly match in the data.',
+    'equals-regex': 'The regex defined must exactly match the data.',
+    'contains-regex': 'The regex defined must exactly match at least once in the data.',
     count:
       'count the amount of item and compare against the provided value.\n Accepted values are `[number]` or `[operator][number]`. Examples: 12, >3, <=2.'
   },
