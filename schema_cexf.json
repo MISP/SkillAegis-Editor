@@ -132,13 +132,13 @@
                         "properties": {
                             "triggered_at": {
                                 "type": [
-                                    "string",
+                                    "number",
                                     "null"
                                 ]
                             },
                             "periodic_run_every": {
                                 "type": [
-                                    "string",
+                                    "number",
                                     "null"
                                 ]
                             }
@@ -274,7 +274,8 @@
                     "target_tool": {
                         "type": "string",
                         "enum": [
-                            "MISP"
+                            "MISP",
+                            "suricata"
                         ]
                     },
                     "uuid": {
