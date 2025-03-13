@@ -202,6 +202,10 @@ const hasValidChanges = computed(() => {
     const inject_eval = selectedInject.value.inject_evaluation[i]
     const orig_inject_eval = originalSelectedInject.inject_evaluation[i]
 
+    if (orig_inject_eval === undefined) { // New inject_eval hasn't been saved yet
+      return true
+    }
+    
     if (inject_eval.score_range[1] != orig_inject_eval.score_range[1]) {
       return true
     }
@@ -933,7 +937,7 @@ function deleteEvaluation(evaluationIndex) {
                     "
                   >
                     <span class="py-0.5 px-5 -ml-2 text-white bg-blue-600 shadow-md font-semibold text-lg rounded">
-                      {{ selectedInject.inject_evaluation_join_type }}
+                      {{ selectedInject.inject_evaluation_join_type ?? '- Select one -' }}
                     </span>
                   </div>
 
