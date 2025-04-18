@@ -51,7 +51,11 @@ const ALLOWED_STRATEGIES_FOR_TOOLS = {
   },
   'suricata': {
     simulate_ips: 'Simulate IPS strategy - Validate if an alert was raised'
-  }
+  },
+  'webhook': {
+    data_filtering: 'Filter data sent to the webhook endpoint',
+    web_query: 'Perform a web query on the provided URL and compare the returned result',
+  },
 }
 const ALLOWED_TRIGGERS = {
   manual: 'Manually trigger by external tools',
@@ -62,6 +66,7 @@ const ALLOWED_TRIGGERS = {
 const ALLOWED_TARGET_TOOLS = {
   MISP: 'MISP',
   suricata: 'Suricata',
+  webhook: 'Webhook',
 }
 const ALLOWED_TRIGGER_FOR_STRATEGIES = {
   periodic: {
