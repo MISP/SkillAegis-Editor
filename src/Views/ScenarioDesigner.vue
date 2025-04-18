@@ -51,7 +51,11 @@ const ALLOWED_STRATEGIES_FOR_TOOLS = {
   },
   'suricata': {
     simulate_ips: 'Simulate IPS strategy - Validate if an alert was raised'
-  }
+  },
+  'webhook': {
+    data_filtering: 'Filter data sent to the webhook endpoint',
+    web_query: 'Perform a web query on the provided URL and compare the returned result',
+  },
 }
 const ALLOWED_TRIGGERS = {
   manual: 'Manually trigger by external tools',
@@ -62,6 +66,7 @@ const ALLOWED_TRIGGERS = {
 const ALLOWED_TARGET_TOOLS = {
   MISP: 'MISP',
   suricata: 'Suricata',
+  webhook: 'Webhook',
 }
 const ALLOWED_TRIGGER_FOR_STRATEGIES = {
   periodic: {
@@ -202,6 +207,10 @@ const hasValidChanges = computed(() => {
     const inject_eval = selectedInject.value.inject_evaluation[i]
     const orig_inject_eval = originalSelectedInject.inject_evaluation[i]
 
+    if (orig_inject_eval === undefined) { // New inject_eval hasn't been saved yet
+      return true
+    }
+    
     if (inject_eval.score_range[1] != orig_inject_eval.score_range[1]) {
       return true
     }
@@ -933,7 +942,7 @@ function deleteEvaluation(evaluationIndex) {
                     "
                   >
                     <span class="py-0.5 px-5 -ml-2 text-white bg-blue-600 shadow-md font-semibold text-lg rounded">
-                      {{ selectedInject.inject_evaluation_join_type }}
+                      {{ selectedInject.inject_evaluation_join_type ?? '- Select one -' }}
                     </span>
                   </div>
 
