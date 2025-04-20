@@ -1,7 +1,7 @@
 import { reactive, computed } from "vue";
 import { store } from '@/store.js'
 
-const URL = process.env.NODE_ENV === "production" ? '' : "http://localhost:5000";
+const URL = process.env.NODE_ENV === "production" ? '' : "http://localhost:4002";
 
 const endpoints = {
     'scenarios-reload': '/scenarios/reload',

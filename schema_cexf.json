@@ -243,7 +243,8 @@
                                         "data_filtering",
                                         "query_mirror",
                                         "query_search",
-                                        "simulate_ips"
+                                        "simulate_ips",
+                                        "misp_query_search"
                                     ]
                                 },
                                 "evaluation_context": {
@@ -275,7 +276,8 @@
                         "type": "string",
                         "enum": [
                             "MISP",
-                            "suricata"
+                            "suricata",
+                            "webhook"
                         ]
                     },
                     "uuid": {

@@ -54,7 +54,7 @@ const ALLOWED_STRATEGIES_FOR_TOOLS = {
   },
   'webhook': {
     data_filtering: 'Filter data sent to the webhook endpoint',
-    web_query: 'Perform a web query on the provided URL and compare the returned result',
+    misp_query_search: 'Perform a web query on the provided MISP URL and compare the returned result',
   },
 }
 const ALLOWED_TRIGGERS = {
