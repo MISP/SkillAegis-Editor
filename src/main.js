@@ -20,6 +20,9 @@ import Modal from '@/components/Modal.vue'
 import Dropdown from '@/components/Dropdown.vue'
 import { fetchScenarios } from './api'
 
+import { basicSetup } from 'codemirror'
+import VueCodemirror from 'vue-codemirror'
+
 document.title = import.meta.env.VITE_APP_TITLE
 
 const routes = [
@@ -81,5 +84,14 @@ app.component('FontAwesomeIcon', FontAwesomeIcon)
 app.component('Alert', Alert)
 app.component('Modal', Modal)
 app.component('Dropdown', Dropdown)
+app.use(VueCodemirror, {
+    // optional default global options
+    disabled: false,
+    indentWithTab: true,
+    tabSize: 4,
+    placeholder: 'Code goes here...',
+    extensions: [basicSetup]
+    // ...
+})
 app.use(router)
 app.mount('#app')

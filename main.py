@@ -383,6 +383,10 @@ def testInject(injectToTest) -> dict:
             debug = debug + inject_debug
         else:
             debug.append([{'message': f'Error while fetching data', 'data': error}])
+    elif inject_evaluation['evaluation_strategy'] == 'python':
+        data_to_validate = injectToTest.test_data
+        (success, inject_debug) = inject_evaluator.eval_python(authkey, inject_evaluation, data_to_validate, context, debug=True)
+        debug = debug + inject_debug
     test_result['outcome'] = INJECT_EVAL_SUCCESS if success else INJECT_EVAL_FAIL
     test_result['debug'] = debug
     return test_result

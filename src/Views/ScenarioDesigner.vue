@@ -25,7 +25,7 @@ import {
   faScrewdriverWrench,
   faTimes,
   faTrash,
-  faStopwatch
+  faStopwatch,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   ref,
@@ -38,6 +38,7 @@ import {
 import JsonEditorVue from 'json-editor-vue'
 import { saveInject, removeInject, saveInjectOrder } from '@/api'
 import { ajaxFeedback, toast } from '@/main'
+import InjectEvaluationPythonEditorWrapper from '@/components/InjectEvaluationPythonEditorWrapper.vue'
 
 const props = defineProps({
   uuid: String
@@ -48,13 +49,15 @@ const ALLOWED_STRATEGIES_FOR_TOOLS = {
     data_filtering: 'Filter Event data',
     query_mirror: 'Perform the same query against MISP',
     query_search: 'Perform a search query on MISP and compare the returned result',
+    python: 'Run a python function',
   },
   'suricata': {
-    simulate_ips: 'Simulate IPS strategy - Validate if an alert was raised'
+    simulate_ips: 'Simulate IPS strategy - Validate if an alert was raised',
   },
   'webhook': {
     data_filtering: 'Filter data sent to the webhook endpoint',
     misp_query_search: 'Perform a web query on the provided MISP URL and compare the returned result',
+    python: 'Run a python function',
   },
 }
 const ALLOWED_TRIGGERS = {
@@ -70,10 +73,10 @@ const ALLOWED_TARGET_TOOLS = {
 }
 const ALLOWED_TRIGGER_FOR_STRATEGIES = {
   periodic: {
-    MISP: ['query_search'],
+    MISP: ['query_search', 'python'],
   },
   triggered_at: {
-    MISP: ['query_search'],
+    MISP: ['query_search', 'python'],
   },
 }
 
@@ -784,7 +787,7 @@ function deleteEvaluation(evaluationIndex) {
                           v-if="ALLOWED_TRIGGER_FOR_STRATEGIES.triggered_at[selectedInject.target_tool]"
                           class="ml-2 mt-1"
                           variant="warning"
-                          :title="`Only works for strategy: ${ALLOWED_TRIGGER_FOR_STRATEGIES.triggered_at[selectedInject.target_tool]}`"
+                          :title="`Only works for strategy: ${ALLOWED_TRIGGER_FOR_STRATEGIES.triggered_at[selectedInject.target_tool].join(', ')}`"
                         >
                         </Alert>
                     </div>
@@ -800,7 +803,7 @@ function deleteEvaluation(evaluationIndex) {
                         v-if="ALLOWED_TRIGGER_FOR_STRATEGIES.triggered_at[selectedInject.target_tool]"
                         class="ml-2 mt-1"
                         variant="warning"
-                        :title="`Only works for strategy: ${ALLOWED_TRIGGER_FOR_STRATEGIES.periodic[selectedInject.target_tool]}`"
+                        :title="`Only works for strategy: ${ALLOWED_TRIGGER_FOR_STRATEGIES.periodic[selectedInject.target_tool].join(', ')}`"
                       >
                       </Alert>
                     </div>
@@ -923,8 +926,13 @@ function deleteEvaluation(evaluationIndex) {
                   </div>
                   <div>
                     <h3 class="text-lg my-2">Evaluation Parameters</h3>
+                    <div v-if="showEditor && selectedInject.inject_evaluation[i].evaluation_strategy == 'python'">
+                      <InjectEvaluationPythonEditorWrapper
+                        v-model="selectedInject.inject_evaluation[i].parameters"
+                      ></InjectEvaluationPythonEditorWrapper>
+                    </div>
                     <JsonEditorVue
-                      v-if="showEditor"
+                      v-else-if="showEditor"
                       v-model="selectedInject.inject_evaluation[i].parameters"
                       :mode="Mode.text"
                       :mainMenuBar="false"
