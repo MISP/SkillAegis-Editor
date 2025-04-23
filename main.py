@@ -361,6 +361,8 @@ def testInject(injectToTest) -> dict:
         'score_range': [0, 10],
     }
     context = {}
+    context.update(inject_evaluation['evaluation_context'])
+    context.update(injectToTest.evaluation_context)
 
     test_result = {
         'outcome': 1,
@@ -471,6 +473,7 @@ class InjectToTestPayload(BaseModel):
     eval_params: list | None = []
 
     test_data: dict | None = {}
+    evaluation_context: dict | None = {}
 
     query_mirror_url: str | None = None
     query_mirror_method: str | None = None

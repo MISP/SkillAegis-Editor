@@ -249,8 +249,9 @@ async function testInject() {
     payload.query_search_misp_apikey = query_search_misp_apikey.value
   } else if (evaluation_strategy.value == 'python') {
     payload.python_payload = python_payload.value
+    payload.test_data = parseJSONNoError(data_filtering_data.value)
   }
-  payload.evaluation_context = evaluation_context.value
+  payload.evaluation_context = parseJSONNoError(evaluation_context.value)
 
   try {
     test_error.value = null
@@ -610,14 +611,42 @@ function copyToClipboard(text) {
                               Object.keys(entry.data).length > 0
                             "
                           >
+                            <div v-if="evaluation_strategy == 'python'">
+                                <table>
+                                  <tbody>
+                                    <tr>
+                                      <th class="text-left">Status:</th>
+                                      <td class="pl-2 text-right">{{ entry.status }}</td>
+                                    </tr>
+                                    <tr>
+                                      <th class="text-left">Exit code:</th>
+                                      <td class="pl-2 text-right"><pre>{{ entry.exit_code }}</pre></td>
+                                    </tr>
+                                    <tr>
+                                      <th class="text-left">Duration:</th>
+                                      <td class="pl-2 text-right">{{ entry.duration.toFixed(2) }}s</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                <div class="mb-3">
+                                  <strong class="mr-2">STDOUT:</strong>
+                                  <pre class="text-xs max-h-32 overflow-y-auto whitespace-pre-wrap mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200"
+                                  >{{ entry.stdout.trim() }}</pre>
+                                </div>
+                                <div>
+                                  <strong class="mr-2">STDERR:</strong>
+                                  <pre class="text-xs max-h-32 overflow-y-auto whitespace-pre-wrap mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200"
+                                  >{{ entry.stderr.trim() }}</pre>
+                                </div>
+                            </div>
                             <pre
+                              v-else
                               :class="`text-xs max-h-32 overflow-y-auto whitespace-pre-wrap ${
                                 typeof entry.data === 'object'
                                   ? 'mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200'
                                   : ''
                               }`"
-                              >{{ JSON.stringify(entry.data, undefined, 2).slice(0, 15000) }}</pre
-                            >
+                              >{{ JSON.stringify(entry.data, undefined, 2)?.slice(0, 15000) }}</pre>
                           </span>
                         </p>
                       </div>
