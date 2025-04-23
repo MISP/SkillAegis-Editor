@@ -230,6 +230,9 @@
                                             {
                                                 "type": "object",
                                                 "additionalProperties": true
+                                            },
+                                            {
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -244,7 +247,8 @@
                                         "query_mirror",
                                         "query_search",
                                         "simulate_ips",
-                                        "misp_query_search"
+                                        "misp_query_search",
+                                        "python"
                                     ]
                                 },
                                 "evaluation_context": {
