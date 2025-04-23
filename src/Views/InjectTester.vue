@@ -13,6 +13,7 @@ import JsonEditorVue from 'json-editor-vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { testInject as testInjectAPI, testJqPath as testJqPathAPI } from '@/api'
+import InjectEvaluationPythonEditorWrapper from '@/components/InjectEvaluationPythonEditorWrapper.vue'
 
 const props = defineProps({
   inject_evaluation: String
@@ -21,7 +22,8 @@ const props = defineProps({
 const ALLOWED_STRATEGIES = {
   data_filtering: 'Filter Event data',
   query_mirror: 'Perform the same query against MISP',
-  query_search: 'Perform a search query on MISP and compare the returned result'
+  query_search: 'Perform a search query on MISP and compare the returned result',
+  python: 'Run a python function',
 }
 const ALLOWED_TARGET_TOOLS = {
   MISP: 'MISP'
@@ -84,6 +86,8 @@ const query_search_method = ref('')
 const query_search_payload = ref('{}')
 const query_search_misp_url = ref('https://localhost/')
 const query_search_misp_apikey = ref('FI4gCRghRZvLVjlLPLTFZ852x2njkkgPSz0zQ3E0')
+const evaluation_context = ref('')
+const python_payload = ref('')
 
 function isValidJSON(text) {
   try {
@@ -98,6 +102,12 @@ const data_filtering_data_valid = computed(() => {
     return true
   }
   return isValidJSON(data_filtering_data.value)
+})
+const evaluation_context_valid = computed(() => {
+  if (typeof evaluation_context.value === 'object') {
+    return true
+  }
+  return isValidJSON(evaluation_context.value)
 })
 const payloads_valid = computed(() => {
   if (typeof evaluation_params.value !== 'object') {
@@ -182,9 +192,11 @@ function resetForm() {
   query_search_url.value = ''
   query_search_method.value = ''
   query_search_payload.value = ''
+  python_payload.value = ''
   // query_search_misp_url.value = 'https://localhost/'
   // query_search_misp_apikey.value = 'xWY4JqZOtoP0xuGWxeb74EuHhxcOnHhgYQHTcMsJ'
   data_filtering_data.value = '{}'
+  evaluation_context.value = '{}'
 }
 
 function initForm() {
@@ -198,7 +210,9 @@ function initForm() {
     query_search_method.value =
       inject_eval.value?.evaluation_context?.query_context?.request_method || ''
     query_search_payload.value = inject_eval.value?.evaluation_context?.query_context?.payload || ''
+    python_payload.value = inject_eval.value?.parameters[0] || 'return True'
     data_filtering_data.value = {}
+    evaluation_context.value = inject_eval.value?.evaluation_context
   }
 }
 
@@ -233,7 +247,11 @@ async function testInject() {
     payload.query_search_payload = parseJSONNoError(query_search_payload.value)
     payload.query_search_misp_url = query_search_misp_url.value
     payload.query_search_misp_apikey = query_search_misp_apikey.value
+  } else if (evaluation_strategy.value == 'python') {
+    payload.python_payload = python_payload.value
+    payload.test_data = parseJSONNoError(data_filtering_data.value)
   }
+  payload.evaluation_context = parseJSONNoError(evaluation_context.value)
 
   try {
     test_error.value = null
@@ -396,28 +414,6 @@ function copyToClipboard(text) {
           <div v-else-if="evaluation_strategy == 'query_search'" class="flex flex-col gap-2">
             <h3 class="text-lg">Query Search</h3>
             <div class="ml-5">
-              <div class="font-semibold pt-1 text-nowrap">URL</div>
-              <div class="min-w-60">
-                <input
-                  type="text"
-                  v-model="query_search_url"
-                  class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                  placeholder="Data created"
-                />
-              </div>
-            </div>
-            <div class="ml-5">
-              <div class="font-semibold pt-1 text-nowrap">Request Method</div>
-              <div class="min-w-60">
-                <input
-                  type="text"
-                  v-model="query_search_method"
-                  class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
-                  placeholder="Data created"
-                />
-              </div>
-            </div>
-            <div class="ml-5">
               <div class="font-semibold pt-1 text-nowrap">Request Payload</div>
               <div class="min-w-60">
                 <JsonEditorVue
@@ -430,9 +426,18 @@ function copyToClipboard(text) {
               </div>
             </div>
           </div>
+
+          <div v-else-if="evaluation_strategy == 'python'" class="flex flex-col gap-2">
+            <h3 class="text-lg">Python Evaluation</h3>
+            <div class="ml-5">
+              <InjectEvaluationPythonEditorWrapper
+                v-model="evaluation_params"
+              ></InjectEvaluationPythonEditorWrapper>
+            </div>
+          </div>
         </Transition>
 
-        <div v-if="evaluation_strategy != 'query_mirror'" class="ml-5 mt-2">
+        <div v-if="evaluation_strategy != 'query_mirror' && evaluation_strategy != 'python'" class="ml-5 mt-2">
           <div class="font-semibold pt-1 text-nowrap">Evaluation Parameters</div>
           <JsonEditorVue
             v-model="evaluation_params"
@@ -456,7 +461,7 @@ function copyToClipboard(text) {
 
           <div class="p-4 box-border">
             <Transition name="slide-left-fade" mode="out-in">
-              <div v-if="evaluation_strategy == 'data_filtering'" class="mb-4">
+              <div v-if="evaluation_strategy == 'data_filtering' || evaluation_strategy == 'python'" class="mb-4">
                 <div class="font-semibold text-nowrap">Test Data</div>
                 <div class="min-w-60">
                   <JsonEditorVue
@@ -495,12 +500,24 @@ function copyToClipboard(text) {
                 </div>
               </div>
             </Transition>
+            <div class="mb-4">
+                <div class="font-semibold text-nowrap">Evaluation Context</div>
+                <div class="min-w-60">
+                  <JsonEditorVue
+                    v-model="evaluation_context"
+                    :mode="Mode.text"
+                    :mainMenuBar="false"
+                    :indentation="4"
+                    class="shadow-md border w-full max-h-96 overflow-auto"
+                  />
+                </div>
+              </div>
             <button
               class="btn btn-block btn-info btn-colored select-none mb-2"
               @click="testInject()"
               :disabled="
                 evaluation_strategy == 'query_mirror' ||
-                !(data_filtering_data_valid && payloads_valid)
+                !(data_filtering_data_valid && evaluation_context_valid && payloads_valid)
               "
             >
               <FontAwesomeIcon :icon="faListCheck" class="fa-fw"></FontAwesomeIcon> Test Inject
@@ -594,14 +611,42 @@ function copyToClipboard(text) {
                               Object.keys(entry.data).length > 0
                             "
                           >
+                            <div v-if="evaluation_strategy == 'python'">
+                                <table>
+                                  <tbody>
+                                    <tr>
+                                      <th class="text-left">Status:</th>
+                                      <td class="pl-2 text-right">{{ entry.status }}</td>
+                                    </tr>
+                                    <tr>
+                                      <th class="text-left">Exit code:</th>
+                                      <td class="pl-2 text-right"><pre>{{ entry.exit_code }}</pre></td>
+                                    </tr>
+                                    <tr>
+                                      <th class="text-left">Duration:</th>
+                                      <td class="pl-2 text-right">{{ entry.duration.toFixed(2) }}s</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                <div class="mb-3">
+                                  <strong class="mr-2">STDOUT:</strong>
+                                  <pre class="text-xs max-h-32 overflow-y-auto whitespace-pre-wrap mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200"
+                                  >{{ entry.stdout.trim() }}</pre>
+                                </div>
+                                <div>
+                                  <strong class="mr-2">STDERR:</strong>
+                                  <pre class="text-xs max-h-32 overflow-y-auto whitespace-pre-wrap mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200"
+                                  >{{ entry.stderr.trim() }}</pre>
+                                </div>
+                            </div>
                             <pre
+                              v-else
                               :class="`text-xs max-h-32 overflow-y-auto whitespace-pre-wrap ${
                                 typeof entry.data === 'object'
                                   ? 'mt-2 p-1 rounded-sm bg-slate-100 border border-slate-200'
                                   : ''
                               }`"
-                              >{{ JSON.stringify(entry.data, undefined, 2).slice(0, 15000) }}</pre
-                            >
+                              >{{ JSON.stringify(entry.data, undefined, 2)?.slice(0, 15000) }}</pre>
                           </span>
                         </p>
                       </div>

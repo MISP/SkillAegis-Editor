@@ -361,6 +361,8 @@ def testInject(injectToTest) -> dict:
         'score_range': [0, 10],
     }
     context = {}
+    context.update(inject_evaluation['evaluation_context'])
+    context.update(injectToTest.evaluation_context)
 
     test_result = {
         'outcome': 1,
@@ -383,6 +385,10 @@ def testInject(injectToTest) -> dict:
             debug = debug + inject_debug
         else:
             debug.append([{'message': f'Error while fetching data', 'data': error}])
+    elif inject_evaluation['evaluation_strategy'] == 'python':
+        data_to_validate = injectToTest.test_data
+        (success, inject_debug) = inject_evaluator.eval_python(authkey, inject_evaluation, data_to_validate, context, debug=True)
+        debug = debug + inject_debug
     test_result['outcome'] = INJECT_EVAL_SUCCESS if success else INJECT_EVAL_FAIL
     test_result['debug'] = debug
     return test_result
@@ -467,6 +473,7 @@ class InjectToTestPayload(BaseModel):
     eval_params: list | None = []
 
     test_data: dict | None = {}
+    evaluation_context: dict | None = {}
 
     query_mirror_url: str | None = None
     query_mirror_method: str | None = None
