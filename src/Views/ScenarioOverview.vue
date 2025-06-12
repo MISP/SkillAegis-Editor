@@ -60,15 +60,17 @@ const exercise_meta = ref('{}')
 
 const exercise_meta_author = ref('MISP Project')
 const exercise_meta_level = ref('beginner')
+const exercise_meta_hall_of_fame = ref(true)
 const exercise_meta_priority = ref(10)
 
 watch(
-  [exercise_meta_author, exercise_meta_level, exercise_meta_priority],
-  ([new_exercise_meta_author, new_exercise_meta_level, new_exercise_meta_priority]) => {
+  [exercise_meta_author, exercise_meta_level, exercise_meta_priority, exercise_meta_hall_of_fame],
+  ([new_exercise_meta_author, new_exercise_meta_level, new_exercise_meta_priority, new_exercise_meta_hall_of_fame]) => {
     const meta_json = JSON.parse(exercise_meta.value)
     meta_json['author'] = new_exercise_meta_author
     meta_json['level'] = new_exercise_meta_level
     meta_json['priority'] = new_exercise_meta_priority
+    meta_json['hall_of_fame'] = new_exercise_meta_hall_of_fame
     exercise_meta.value = JSON.stringify(meta_json, undefined, 4)
   }
 )
@@ -78,6 +80,7 @@ watch(exercise_meta, (new_exercise_meta) => {
   exercise_meta_author.value = meta_json['author']
   exercise_meta_level.value = meta_json['level']
   exercise_meta_priority.value = meta_json['priority']
+  exercise_meta_hall_of_fame.value = meta_json['hall_of_fame'] ?? meta_json['hall_of_fame']
 })
 
 const injectCount = computed(() => {
@@ -271,6 +274,23 @@ function initForm() {
                 id="description"
                 placeholder="A description"
               />
+            </div>
+          </div>
+
+          <div class="flex flex-row gap-6">
+            <div>
+              <label for="hall_of_fame" class="block text-gray-700 font-bold mb-2"
+                >Hall of Fame</label
+              >
+              <select
+                v-model="exercise_meta_hall_of_fame"
+                class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400 bg-white"
+                id="hall_of_fame"
+                placeholder="Active"
+              >
+                <option :value="true">Active</option>
+                <option :value="false">Hidden</option>
+              </select>
             </div>
           </div>
 
