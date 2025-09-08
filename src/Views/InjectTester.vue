@@ -242,8 +242,11 @@ async function testInject() {
     payload.query_mirror_method = query_mirror_method.value
     payload.query_mirror_payload = parseJSONNoError(evaluation_params.value)
   } else if (evaluation_strategy.value == 'query_search') {
-    payload.query_search_url = query_search_url.value
-    payload.query_search_method = query_search_method.value
+    //payload.query_search_url = query_search_url.value
+    //payload.query_search_method = query_search_method.value
+    const ec = parseJSONNoError(evaluation_context.value)
+    payload.query_search_url = ec['query_context']['url'] || '/'
+    payload.query_search_method = ec['query_context']['request_method'] || 'GET'
     payload.query_search_payload = parseJSONNoError(query_search_payload.value)
     payload.query_search_misp_url = query_search_misp_url.value
     payload.query_search_misp_apikey = query_search_misp_apikey.value
