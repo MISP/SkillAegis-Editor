@@ -28,6 +28,9 @@
                         "priority": {
                             "type": "integer",
                             "minimum": 0
+                        },
+                        "hall_of_fame": {
+                            "type": "boolean"
                         }
                     },
                     "required": [
