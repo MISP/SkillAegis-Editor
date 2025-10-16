@@ -353,9 +353,9 @@ def testInject(injectToTest) -> dict:
         'evaluation_strategy': injectToTest.evaluation_strategy,
         'evaluation_context': {
             'query_context': {
-                'url': injectToTest.query_search_url if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_url,
-                'request_method': injectToTest.query_search_method if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_method,
-                'payload': injectToTest.query_search_payload if injectToTest.evaluation_strategy == 'query_search' else injectToTest.query_mirror_payload,
+                'url': injectToTest.query_search_url if (injectToTest.evaluation_strategy == 'query_search' or injectToTest.evaluation_strategy == 'python') else injectToTest.query_mirror_url,
+                'request_method': injectToTest.query_search_method if (injectToTest.evaluation_strategy == 'query_search' or injectToTest.evaluation_strategy == 'python') else injectToTest.query_mirror_method,
+                'payload': injectToTest.query_search_payload if (injectToTest.evaluation_strategy == 'query_search' or injectToTest.evaluation_strategy == 'python') else injectToTest.query_mirror_payload,
             }
         },
         'score_range': [0, 10],
@@ -386,7 +386,14 @@ def testInject(injectToTest) -> dict:
         else:
             debug.append([{'message': f'Error while fetching data', 'data': error}])
     elif inject_evaluation['evaluation_strategy'] == 'python':
+        # Tries to fetch data based on provided auth. Fallback to test_data
         data_to_validate = injectToTest.test_data
+        if misp_url and authkey:
+            print(injectToTest)
+            data_to_validate, error = fetch_data_for_query_search(misp_url, authkey, inject_evaluation)
+        if data_to_validate is False:
+            data_to_validate = injectToTest.test_data
+
         (success, inject_debug) = inject_evaluator.eval_python(authkey, inject_evaluation, data_to_validate, context, debug=True)
         debug = debug + inject_debug
     test_result['outcome'] = INJECT_EVAL_SUCCESS if success else INJECT_EVAL_FAIL

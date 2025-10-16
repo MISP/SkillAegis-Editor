@@ -251,6 +251,12 @@ async function testInject() {
     payload.query_search_misp_url = query_search_misp_url.value
     payload.query_search_misp_apikey = query_search_misp_apikey.value
   } else if (evaluation_strategy.value == 'python') {
+    const ec = parseJSONNoError(evaluation_context.value)
+    payload.query_search_url = ec['query_context']['url'] || '/'
+    payload.query_search_method = ec['query_context']['request_method'] || 'GET'
+    payload.query_search_payload = ec['query_context']['payload'] || {}
+    payload.query_search_misp_url = query_search_misp_url.value
+    payload.query_search_misp_apikey = query_search_misp_apikey.value
     payload.python_payload = python_payload.value
     payload.test_data = parseJSONNoError(data_filtering_data.value)
   }
@@ -452,7 +458,7 @@ function copyToClipboard(text) {
         </div>
       </div>
 
-      <div class="basis-2/5 flex flex-col gap-3 relative p-2">
+      <div class="basis-2/5 flex flex-col gap-3 relative p-2 max-w-[60%]">
         <div
           v-if="evaluation_strategy == 'query_mirror'"
           class="absolute left-0 top-0 w-full h-full z-30 backdrop-blur-[2px] bg-slate-300/30 rounded box-content"
@@ -464,7 +470,43 @@ function copyToClipboard(text) {
 
           <div class="p-4 box-border">
             <Transition name="slide-left-fade" mode="out-in">
-              <div v-if="evaluation_strategy == 'data_filtering' || evaluation_strategy == 'python'" class="mb-4">
+              <div v-if="evaluation_strategy == 'data_filtering'" class="mb-4">
+                <div class="font-semibold text-nowrap">Test Data</div>
+                <div class="min-w-60">
+                  <JsonEditorVue
+                    v-model="data_filtering_data"
+                    :mode="Mode.text"
+                    :mainMenuBar="false"
+                    :indentation="4"
+                    class="shadow-md border w-full max-h-96 overflow-auto"
+                  />
+                </div>
+              </div>
+              <div v-else-if="evaluation_strategy == 'python'" class="mb-4">
+                <div class="flex flex-col gap-2">
+                  <div>
+                    <div class="font-semibold pt-1 text-nowrap">MISP URL</div>
+                    <div class="min-w-60">
+                      <input
+                        type="text"
+                        v-model="query_search_misp_url"
+                        class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                        placeholder="https://misp.local"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div class="font-semibold pt-1 text-nowrap">MISP API Key</div>
+                    <div class="min-w-60">
+                      <input
+                        type="text"
+                        v-model="query_search_misp_apikey"
+                        class="shadow border font-mono w-full rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border focus:border-slate-400"
+                        placeholder="FI4gCRghRZvLVjlLPLTFZ852x2njkkgPSz0zQ3E0"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div class="font-semibold text-nowrap">Test Data</div>
                 <div class="min-w-60">
                   <JsonEditorVue
